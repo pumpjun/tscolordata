@@ -52,143 +52,103 @@ def clear_dyes():
 # 1. 엑셀 연동 함수 모음
 # ==========================================
 def fill_solution_excel(template_file_bytes, all_extracted_data, user_inputs):
-    pythoncom.CoInitialize()
-    
-    fd_in, tmp_in_path = tempfile.mkstemp(suffix=".xlsx")
-    with open(tmp_in_path, 'wb') as f: f.write(template_file_bytes.getvalue())
-    os.close(fd_in)
-    
-    fd_out, tmp_out_path = tempfile.mkstemp(suffix=".xlsx")
-    os.close(fd_out)
+    # 기존 코드에 남아있던 pythoncom 관련 내용을 완전히 제거한 순수 openpyxl 버전입니다.
+    wb = openpyxl.load_workbook(template_file_bytes)
+    ws = wb.worksheets[0]
 
-    excel = None
-    wb = None
+    # 공통 입력란 채우기 (Ref, From, To 등)
+    for i, ans in enumerate(user_inputs): 
+        ws.cell(row=3 + i, column=2).value = ans
 
-    try:
-        excel = win32.DispatchEx("Excel.Application")
-        excel.Visible = False
-        excel.DisplayAlerts = False 
-        wb = excel.Workbooks.Open(tmp_in_path)
-        ws = wb.Sheets(1) 
+    # 원본 블록(10~15행)의 병합된 셀 정보 미리 수집
+    merges_to_add = []
+    for m_range in ws.merged_cells.ranges:
+        if 10 <= m_range.min_row <= 15:
+            merges_to_add.append((m_range.min_row, m_range.max_row, m_range.min_col, m_range.max_col))
 
-        # 공통 입력란 채우기
-        for i, ans in enumerate(user_inputs): ws.Range(f"B{3 + i}").Value = ans
-
-        # [블록 복사] 데이터 갯수만큼 양식 복사
-        for index in range(1, len(all_extracted_data)):
-            row_offset = index * 6  
-            start_row = 10 + row_offset
-            ws.Range("A10:I15").Copy()
-            ws.Range(f"A{start_row}").PasteSpecial(Paste=-4104)
-            for r_offset in range(6): ws.Rows(start_row + r_offset).RowHeight = ws.Rows(10 + r_offset).RowHeight
-
-        original_e = ws.Range("E11").Value
-        original_f = ws.Range("F11").Value
-        existing_e_str = str(original_e).strip() if original_e is not None else ""
-        existing_f_str = str(original_f).strip() if original_f is not None else ""
-
-        # [데이터 및 도형 처리]
-        # (앞부분 블록 복사 코드는 그대로 유지)
-        for index in range(1, len(all_extracted_data)):
-            row_offset = index * 6  
-            start_row = 10 + row_offset
-            ws.Range("A10:I15").Copy()
-            ws.Range(f"A{start_row}").PasteSpecial(Paste=-4104)
-            for r_offset in range(6): ws.Rows(start_row + r_offset).RowHeight = ws.Rows(10 + r_offset).RowHeight
-
-        original_e = ws.Range("E11").Value
-        original_f = ws.Range("F11").Value
-        existing_e_str = str(original_e).strip() if original_e is not None else ""
-        existing_f_str = str(original_f).strip() if original_f is not None else ""
-
-        # ===========================================================
-        # [추가] 1. 반복문 시작 전에 첫 번째 데이터의 '원본 도형'을 미리 찾아둡니다.
-        # ===========================================================
-        original_shape = None
-        for i_shape in range(1, ws.Shapes.Count + 1):
-            try:
-                s = ws.Shapes(i_shape)
-                if s.TopLeftCell.Column == 1 and (10 <= s.TopLeftCell.Row <= 15):
-                    original_shape = s
-                    break
-            except: pass
-
-        # [데이터 및 도형 처리]
-        for index, data_group in enumerate(all_extracted_data):
-            row_offset = index * 6  
-            
-            # 텍스트 정보 기입 (기존과 동일)
-            ws.Range(f"B{10 + row_offset}").Value = data_group['color_name']
-            ws.Range(f"B{12 + row_offset}").Value = data_group['option_letter']
-
-            # E열, F열 광원/결과 입력 (기존과 동일)
-            if existing_e_str: ws.Range(f"E{11 + row_offset}").Value = f"{existing_e_str}\n{data_group['light1']}"
-            else: ws.Range(f"E{11 + row_offset}").Value = data_group['light1']
-            ws.Range(f"E{12 + row_offset}").Value = data_group['de_cmc']
+    # [블록 복사 함수] 서식, 높이 등을 그대로 복사
+    def copy_block(src_min_row, src_max_row, src_min_col, src_max_col, row_offset):
+        for row in range(src_min_row, src_max_row + 1):
+            ws.row_dimensions[row + row_offset].height = ws.row_dimensions[row].height
+            for col in range(src_min_col, src_max_col + 1):
+                src_cell = ws.cell(row=row, column=col)
+                dst_cell = ws.cell(row=row + row_offset, column=col)
                 
-            if data_group['light2']:
-                if existing_f_str: ws.Range(f"F{11 + row_offset}").Value = f"{existing_f_str}\n{data_group['light2']}"
-                else: ws.Range(f"F{11 + row_offset}").Value = data_group['light2']
-                ws.Range(f"F{12 + row_offset}").Value = data_group['metamerism']
-            else:
-                ws.Range(f"F{11 + row_offset}").Value = existing_f_str
-                ws.Range(f"F{12 + row_offset}").Value = "-"
+                dst_cell.value = src_cell.value
+                if src_cell.has_style:
+                    dst_cell.font = copy(src_cell.font)
+                    dst_cell.border = copy(src_cell.border)
+                    dst_cell.fill = copy(src_cell.fill)
+                    dst_cell.number_format = copy(src_cell.number_format)
+                    dst_cell.protection = copy(src_cell.protection)
+                    dst_cell.alignment = copy(src_cell.alignment)
 
-            # ===========================================================
-            # [수정] 2. 도형 처리: 첫 번째는 원본 색칠, 두 번째부터는 복제 후 이동하여 색칠
-            # ===========================================================
-            target_color = data_group["excel_color"]
+    # 기준이 될 E11, F11 텍스트
+    original_e_val = ws.cell(row=11, column=5).value
+    original_f_val = ws.cell(row=11, column=6).value
+    existing_e_str = str(original_e_val).strip() if original_e_val is not None else ""
+    existing_f_str = str(original_f_val).strip() if original_f_val is not None else ""
+
+    # [데이터 처리]
+    for index, data_group in enumerate(all_extracted_data):
+        row_offset = index * 6  
+        start_row = 10 + row_offset
+
+        # 두 번째 데이터부터는 10~15행을 복사해서 붙여넣기
+        if index > 0:
+            copy_block(10, 15, 1, 9, row_offset)
             
-            if original_shape is not None:
-                try:
-                    if index == 0:
-                        # 첫 번째 데이터: 복사할 필요 없이 원본 도형을 바로 사용
-                        current_shape = original_shape
-                    else:
-                        # 두 번째 데이터부터: 원본 도형을 복제(Duplicate)
-                        current_shape = original_shape.Duplicate()
-                        
-                        # A12 셀을 기준으로 도형이 얼마나 떨어져 있는지 간격(여백) 계산
-                        top_margin = original_shape.Top - ws.Range("A12").Top
-                        
-                        # 새 도형을 알맞은 위치(18행, 24행 등)로 이동
-                        current_shape.Top = ws.Range(f"A{12 + row_offset}").Top + top_margin
-                        current_shape.Left = original_shape.Left
+            # 병합된 셀 구조도 똑같이 복사
+            for (m_min_row, m_max_row, m_min_col, m_max_col) in merges_to_add:
+                ws.merge_cells(start_row=m_min_row + row_offset, end_row=m_max_row + row_offset, 
+                               start_column=m_min_col, end_column=m_max_col)
 
-                    # QTX 색상으로 색칠
-                    current_shape.Fill.Visible = 1
-                    current_shape.Fill.Solid()
-                    current_shape.Fill.Transparency = 0.0  
-                    current_shape.Fill.ForeColor.RGB = target_color
-                    current_shape.Line.Visible = 1
-                    current_shape.Line.Transparency = 0.0
-                    current_shape.Line.ForeColor.RGB = target_color
-                except Exception as e:
-                    pass
+        # 텍스트 정보 기입
+        ws.cell(row=10 + row_offset, column=2).value = data_group['color_name'] # B10
+        ws.cell(row=12 + row_offset, column=2).value = data_group['option_letter'] # B12
+
+        # E열, F열 (광원 및 메타머리즘)
+        if existing_e_str: 
+            ws.cell(row=11 + row_offset, column=5).value = f"{existing_e_str}\n{data_group['light1']}"
+        else: 
+            ws.cell(row=11 + row_offset, column=5).value = data_group['light1']
+        ws.cell(row=12 + row_offset, column=5).value = float(data_group['de_cmc'])
             
-            # 염료 텍스트 채우기 (동그라미 추가 생성 없이 텍스트만 3줄)
-            num_dyes = len(data_group["dyes"])
-            for i in range(num_dyes):
-                dye = data_group["dyes"][i]
-                ws.Range(f"C{12 + row_offset + i}").Value = dye['dye_name']
-                ws.Range(f"D{12 + row_offset + i}").Value = dye['value']
+        if data_group['light2']:
+            if existing_f_str: 
+                ws.cell(row=11 + row_offset, column=6).value = f"{existing_f_str}\n{data_group['light2']}"
+            else: 
+                ws.cell(row=11 + row_offset, column=6).value = data_group['light2']
+            ws.cell(row=12 + row_offset, column=6).value = float(data_group['metamerism'])
+        else:
+            ws.cell(row=11 + row_offset, column=6).value = existing_f_str
+            ws.cell(row=12 + row_offset, column=6).value = "-"
+        
+        # 염료 텍스트 채우기
+        num_dyes = len(data_group["dyes"])
+        for i in range(num_dyes):
+            dye = data_group["dyes"][i]
+            ws.cell(row=12 + row_offset + i, column=3).value = dye['dye_name'] # C열
+            ws.cell(row=12 + row_offset + i, column=4).value = float(dye['value']) # D열
 
-        excel.CutCopyMode = False 
-        wb.SaveAs(tmp_out_path)
+        # [색상 칠하기 - 도형 대신 A12 셀의 배경색을 채움]
+        int_color = data_group["excel_color"]
+        # 기존 정수 형태의 RGB를 분해 (r + g*256 + b*65536)
+        r = int_color % 256
+        g = (int_color // 256) % 256
+        b = (int_color // 65536) % 256
+        # openpyxl용 Hex 코드로 변환 (ARGB 형식)
+        hex_color = f"FF{r:02X}{g:02X}{b:02X}" 
+        
+        target_cell = ws.cell(row=12 + row_offset, column=1) # A12 기준
+        target_cell.fill = PatternFill(start_color=hex_color, end_color=hex_color, fill_type="solid")
+        target_cell.value = "" 
 
-    except Exception as e: 
-        raise Exception(f"엑셀 처리 중 오류 발생: {str(e)}")
-
-    finally:
-        if wb:
-            try: wb.Close(SaveChanges=False)
-            except: pass
-        if excel:
-            try: excel.Quit()
-            except: pass
-        pythoncom.CoUninitialize()
-
-    with open(tmp_out_path, "rb") as f: final_bytes = BytesIO(f.read())
+    # 메모리에 엑셀 파일 저장 후 반환
+    final_bytes = BytesIO()
+    wb.save(final_bytes)
+    final_bytes.seek(0)
+    
     return final_bytes
 
 
