@@ -34,10 +34,8 @@ def load_dye_data():
         return valid_dye_db
 
 @st.cache_data
-# 파라미터 이름을 valid_keys에서 _valid_keys로 변경했습니다.
 def load_dye_mapping(_valid_keys):
     try:
-        # header=None을 통해 1행부터 데이터로 읽어옵니다.
         df = pd.read_excel('dye_list.xlsx', header=None)
         mapping_list = []
         disp_dict = {}
@@ -46,7 +44,6 @@ def load_dye_mapping(_valid_keys):
             raw_name = str(row[0]).strip()
             display_name = str(row[1]).strip()
             
-            # JSON 데이터에 실제로 존재하는 염료인지 확인
             if raw_name in _valid_keys:
                 mapping_list.append((raw_name, display_name))
                 disp_dict[raw_name] = display_name
@@ -54,12 +51,10 @@ def load_dye_mapping(_valid_keys):
         return mapping_list, disp_dict
     except Exception as e:
         st.error(f"엑셀 파일(dye_list.xlsx)을 읽는 중 오류가 발생했습니다: {e}")
-        # 오류 시 기본 원래 이름으로 가나다순 정렬하여 반환
         default_list = [(k, k) for k in sorted(list(_valid_keys))]
         return default_list, {k: k for k in _valid_keys}
 
 dye_db = load_dye_data()
-# 엑셀 파일에서 맵핑 정보와 순서를 가져옵니다.
 all_dyes_ordered, display_name_dict = load_dye_mapping(dye_db.keys())
 
 datacolor_tl84_vals = [
@@ -102,8 +97,13 @@ blank_ks = get_ks(blank_r)
 # ==========================================
 # 2. Streamlit 웹 UI 구성
 # ==========================================
-# 사이드바 고정
-st.set_page_config(layout="wide", initial_sidebar_state="expanded", page_title="T/S Colordata")
+# ✅ 사이드바 아이콘 및 브라우저 탭 로고 변경 부분
+st.set_page_config(
+    layout="wide", 
+    initial_sidebar_state="expanded", 
+    page_title="T/S Colordata", 
+    page_icon="logo.png" # 브라우저 탭 아이콘으로 적용
+)
 
 # 사이드바 닫기 숨김 & 여백 조절
 st.markdown("""
@@ -121,16 +121,15 @@ with st.sidebar:
     st.markdown("### 🎨 전체 염료 리스트")
     st.caption("클릭하여 선택 / 해제하세요.")
     
-    # 엑셀 순서대로 출력하며, 표시명(display_name)을 버튼에 노출
     for raw_name, display_name in all_dyes_ordered:
         btn_type = "primary" if raw_name in st.session_state.selected_dyes else "secondary"
         st.button(
-            display_name, # 화면엔 B열 이름
-            key=f"dye_{raw_name}", # 고유 식별자는 A열 이름(오류 방지)
+            display_name, 
+            key=f"dye_{raw_name}", 
             use_container_width=True, 
             type=btn_type,
             on_click=toggle_dye,
-            args=(raw_name,) # 처리도 A열 이름 기준으로 수행
+            args=(raw_name,)
         )
 
 # 메인 화면 좌우 분할
@@ -142,7 +141,6 @@ col_menu, col_results = st.columns([1.2, 2], gap="large")
 with col_menu:
     st.subheader("⚙️ 검색 옵션 설정")
     
-    # 1. QTX 파일 업로드 및 색상 미리보기
     upload_col, color_col = st.columns([2.5, 1])
     
     with upload_col:
@@ -245,7 +243,12 @@ with col_menu:
 # 메인 우측 컬럼 (결과 영역)
 # ------------------------------------------
 with col_results:
-    st.header("🧪 T/S Colordata")
+    # ✅ 주사기 이모티콘 대신 로고 이미지가 들어가도록 컬럼 분할 배치
+    title_col1, title_col2 = st.columns([0.1, 0.9])
+    with title_col1:
+        st.image("logo.png", width=45) # width 값을 수정하여 로고 크기를 조절할 수 있습니다.
+    with title_col2:
+        st.header("T/S Colordata")
 
     if run_search:
         selected_pool = st.session_state.selected_dyes
@@ -261,7 +264,6 @@ with col_results:
         results = []
         
         for idx, combo in enumerate(combos):
-            # 화면 안내에도 맵핑된 이름을 보여주기 위해 변환
             combo_display_names = [display_name_dict.get(name, name) for name in combo]
             my_bar.progress(
                 (idx + 1) / len(combos), 
@@ -360,7 +362,6 @@ with col_results:
             if light3_name != "없음": row_labels.append(f"Metamerism {light3_name}")
             row_labels.append("Total concentration [%]")
             
-            # 최종 데이터 표 헤더에도 엑셀의 표시명(display_name) 반영
             row_labels.extend([display_name_dict.get(dye, dye) for dye in selected_pool])
             
             df_dict = {"Property / Dyestuff": row_labels}
