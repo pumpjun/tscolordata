@@ -11,8 +11,9 @@ import tempfile
 from io import BytesIO
 from datetime import datetime
 # ====== 여기에 아래 두 줄을 추가해 주세요 ======
-import pythoncom
-import win32com.client as win32
+import openpyxl
+from openpyxl.styles import PatternFill
+from copy import copy
 # ==========================================
 
 # ==========================================
