@@ -5,6 +5,7 @@ import colour
 import itertools
 import pandas as pd
 from scipy.optimize import minimize
+import base64
 
 # ==========================================
 # 0. 세션 상태 초기화 (염료 선택 토글용)
@@ -243,12 +244,20 @@ with col_menu:
 # 메인 우측 컬럼 (결과 영역)
 # ------------------------------------------
 with col_results:
-    # ✅ 주사기 이모티콘 대신 로고 이미지가 들어가도록 컬럼 분할 배치
-    title_col1, title_col2 = st.columns([0.1, 0.9])
-    with title_col1:
-        st.image("logo.png", width=45) # width 값을 수정하여 로고 크기를 조절할 수 있습니다.
-    with title_col2:
-        st.header("T/S Colordata")
+    # 로고 이미지를 읽어서 HTML에 직접 넣을 수 있도록 변환
+    with open("logo.png", "rb") as image_file:
+        logo_base64 = base64.b64encode(image_file.read()).decode()
+    
+    # HTML과 Flexbox를 이용해 간격(gap)과 수직 중앙 정렬(align-items) 설정
+    st.markdown(
+        f"""
+        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 25px;">
+            <img src="data:image/png;base64,{logo_base64}" width="45">
+            <h2 style="margin: 0; padding: 0;">T/S Colordata</h2>
+        </div>
+        """, 
+        unsafe_allow_html=True
+    )
 
     if run_search:
         selected_pool = st.session_state.selected_dyes
