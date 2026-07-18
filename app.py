@@ -7,8 +7,6 @@ import pandas as pd
 from scipy.optimize import minimize
 import base64
 import os
-import pythoncom
-import win32com.client as win32
 import tempfile
 from io import BytesIO
 from datetime import datetime
