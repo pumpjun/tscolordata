@@ -10,6 +10,10 @@ import os
 import tempfile
 from io import BytesIO
 from datetime import datetime
+# ====== 여기에 아래 두 줄을 추가해 주세요 ======
+import pythoncom
+import win32com.client as win32
+# ==========================================
 
 # ==========================================
 # 0. 설정 및 세션 상태 초기화
@@ -30,6 +34,8 @@ if "final_excel_bytes" not in st.session_state:
     st.session_state.final_excel_bytes = None
 if "final_excel_filename" not in st.session_state:
     st.session_state.final_excel_filename = ""
+if "accumulated_data" not in st.session_state:
+    st.session_state.accumulated_data = []
 
 def toggle_dye(raw_name):
     if raw_name in st.session_state.selected_dyes:
@@ -81,47 +87,83 @@ def fill_solution_excel(template_file_bytes, all_extracted_data, user_inputs):
         existing_f_str = str(original_f).strip() if original_f is not None else ""
 
         # [데이터 및 도형 처리]
+        # (앞부분 블록 복사 코드는 그대로 유지)
+        for index in range(1, len(all_extracted_data)):
+            row_offset = index * 6  
+            start_row = 10 + row_offset
+            ws.Range("A10:I15").Copy()
+            ws.Range(f"A{start_row}").PasteSpecial(Paste=-4104)
+            for r_offset in range(6): ws.Rows(start_row + r_offset).RowHeight = ws.Rows(10 + r_offset).RowHeight
+
+        original_e = ws.Range("E11").Value
+        original_f = ws.Range("F11").Value
+        existing_e_str = str(original_e).strip() if original_e is not None else ""
+        existing_f_str = str(original_f).strip() if original_f is not None else ""
+
+        # ===========================================================
+        # [추가] 1. 반복문 시작 전에 첫 번째 데이터의 '원본 도형'을 미리 찾아둡니다.
+        # ===========================================================
+        original_shape = None
+        for i_shape in range(1, ws.Shapes.Count + 1):
+            try:
+                s = ws.Shapes(i_shape)
+                if s.TopLeftCell.Column == 1 and (10 <= s.TopLeftCell.Row <= 15):
+                    original_shape = s
+                    break
+            except: pass
+
+        # [데이터 및 도형 처리]
         for index, data_group in enumerate(all_extracted_data):
             row_offset = index * 6  
             
-            # 텍스트 정보 기입
+            # 텍스트 정보 기입 (기존과 동일)
             ws.Range(f"B{10 + row_offset}").Value = data_group['color_name']
-            ws.Range(f"B{12 + row_offset}").Value = data_group['option_letter'] # 무조건 "R" 들어감
+            ws.Range(f"B{12 + row_offset}").Value = data_group['option_letter']
 
-            # E열 (11행: 광원 이름 줄바꿈 추가, 12행: 결과 수치)
-            if existing_e_str: 
-                ws.Range(f"E{11 + row_offset}").Value = f"{existing_e_str}\n{data_group['light1']}"
-            else: 
-                ws.Range(f"E{11 + row_offset}").Value = data_group['light1']
+            # E열, F열 광원/결과 입력 (기존과 동일)
+            if existing_e_str: ws.Range(f"E{11 + row_offset}").Value = f"{existing_e_str}\n{data_group['light1']}"
+            else: ws.Range(f"E{11 + row_offset}").Value = data_group['light1']
             ws.Range(f"E{12 + row_offset}").Value = data_group['de_cmc']
                 
-            # F열 (11행: 메타머리즘 광원 이름 줄바꿈 추가, 12행: 결과 수치)
             if data_group['light2']:
-                if existing_f_str: 
-                    ws.Range(f"F{11 + row_offset}").Value = f"{existing_f_str}\n{data_group['light2']}"
-                else: 
-                    ws.Range(f"F{11 + row_offset}").Value = data_group['light2']
+                if existing_f_str: ws.Range(f"F{11 + row_offset}").Value = f"{existing_f_str}\n{data_group['light2']}"
+                else: ws.Range(f"F{11 + row_offset}").Value = data_group['light2']
                 ws.Range(f"F{12 + row_offset}").Value = data_group['metamerism']
             else:
                 ws.Range(f"F{11 + row_offset}").Value = existing_f_str
                 ws.Range(f"F{12 + row_offset}").Value = "-"
-            
-            # 도형 색칠용 컬러 지정 (QTX 분석 색상)
+
+            # ===========================================================
+            # [수정] 2. 도형 처리: 첫 번째는 원본 색칠, 두 번째부터는 복제 후 이동하여 색칠
+            # ===========================================================
             target_color = data_group["excel_color"]
             
-            # 현재 블록의 12행 기준 도형 찾아 색칠 (1개만)
-            for i_shape in range(1, ws.Shapes.Count + 1):
+            if original_shape is not None:
                 try:
-                    s = ws.Shapes(i_shape)
-                    if s.TopLeftCell.Column == 1 and s.TopLeftCell.Row == 12 + row_offset:
-                        s.Fill.Visible = 1
-                        s.Fill.Solid()
-                        s.Fill.Transparency = 0.0  
-                        s.Fill.ForeColor.RGB = target_color
-                        s.Line.Visible = 1
-                        s.Line.Transparency = 0.0
-                        s.Line.ForeColor.RGB = target_color
-                except: pass
+                    if index == 0:
+                        # 첫 번째 데이터: 복사할 필요 없이 원본 도형을 바로 사용
+                        current_shape = original_shape
+                    else:
+                        # 두 번째 데이터부터: 원본 도형을 복제(Duplicate)
+                        current_shape = original_shape.Duplicate()
+                        
+                        # A12 셀을 기준으로 도형이 얼마나 떨어져 있는지 간격(여백) 계산
+                        top_margin = original_shape.Top - ws.Range("A12").Top
+                        
+                        # 새 도형을 알맞은 위치(18행, 24행 등)로 이동
+                        current_shape.Top = ws.Range(f"A{12 + row_offset}").Top + top_margin
+                        current_shape.Left = original_shape.Left
+
+                    # QTX 색상으로 색칠
+                    current_shape.Fill.Visible = 1
+                    current_shape.Fill.Solid()
+                    current_shape.Fill.Transparency = 0.0  
+                    current_shape.Fill.ForeColor.RGB = target_color
+                    current_shape.Line.Visible = 1
+                    current_shape.Line.Transparency = 0.0
+                    current_shape.Line.ForeColor.RGB = target_color
+                except Exception as e:
+                    pass
             
             # 염료 텍스트 채우기 (동그라미 추가 생성 없이 텍스트만 3줄)
             num_dyes = len(data_group["dyes"])
@@ -156,7 +198,8 @@ def fill_solution_excel(template_file_bytes, all_extracted_data, user_inputs):
 def load_dye_data():
     with open('dye_data.json', 'r') as f:
         raw_data = json.load(f)
-        valid_dye_db = {name: concs for name, concs in raw_data.items() if len(concs) > 0}
+        # 💡 수정됨: name 부분에 .strip()을 추가해서 JSON 데이터의 이름표에서도 띄어쓰기를 지웁니다.
+        valid_dye_db = {name.strip(): concs for name, concs in raw_data.items() if len(concs) > 0}
         return valid_dye_db
 
 @st.cache_data
@@ -165,20 +208,27 @@ def load_dye_mapping(_valid_keys):
         df = pd.read_excel('dye_list.xlsx', header=None)
         mapping_list = []
         disp_dict = {}
+        missing_dyes = [] # 💡 누락된 염료를 추적할 리스트 추가
+
         for _, row in df.iterrows():
             raw_name = str(row[0]).strip()
             display_name = str(row[1]).strip()
+            
             if raw_name in _valid_keys:
                 mapping_list.append((raw_name, display_name))
                 disp_dict[raw_name] = display_name
-        return mapping_list, disp_dict
+            else:
+                missing_dyes.append(raw_name) # 💡 유효한 데이터가 없으면 누락 리스트에 추가
+
+        return mapping_list, disp_dict, missing_dyes
     except Exception as e:
         st.error(f"엑셀 파일(dye_list.xlsx)을 읽는 중 오류가 발생했습니다: {e}")
         default_list = [(k, k) for k in sorted(list(_valid_keys))]
-        return default_list, {k: k for k in _valid_keys}
+        return default_list, {k: k for k in _valid_keys}, []
 
 dye_db = load_dye_data()
-all_dyes_ordered, display_name_dict = load_dye_mapping(dye_db.keys())
+# 리턴 받는 값에 missing_dyes 추가
+all_dyes_ordered, display_name_dict, missing_dyes = load_dye_mapping(dye_db.keys())
 
 datacolor_tl84_vals = [
     0.91, 0.63, 0.46, 0.37, 1.29, 12.68, 1.59, 1.79, 2.46, 3.38, 
@@ -232,6 +282,11 @@ st.markdown("""
 
 with st.sidebar:
     st.markdown("### 🎨 전체 염료 리스트")
+    
+    # 💡 데이터가 없어서 누락된 염료가 있다면 사이드바에 안내 메시지 띄우기
+    if missing_dyes:
+        st.warning(f"⚠️ 데이터 부족으로 제외된 염료 {len(missing_dyes)}개:\n{', '.join(missing_dyes)}")
+    
     st.caption("클릭하여 선택 / 해제하세요.")
     
     for raw_name, display_name in all_dyes_ordered:
@@ -503,97 +558,113 @@ with col_results:
         st.dataframe(styled_df, use_container_width=True)
         
         # ==========================================
-        # 4. 엑셀 리포트 다운로드 (수정됨)
+        # 4. 엑셀 리포트 다운로드 (장바구니 방식 도입)
         # ==========================================
         st.markdown("---")
-        st.markdown("### 📄 엑셀(Excel) 리포트 다운로드")
+        st.markdown("### 🛒 엑셀 출력용 데이터 모으기")
         
-        # 라디오 버튼으로 무조건 '1개'만 선택 가능하게
         available_ranks = list(range(1, len(top_results) + 1))
         selected_rank = st.radio(
-            "📌 출력할 처방 순위를 선택하세요:", 
+            "📌 리스트에 추가할 처방 순위를 선택하세요:", 
             options=available_ranks, 
             horizontal=True
         )
         
-        with st.expander("📝 리포트 기본 정보", expanded=True):
-            r_col1, r_col2 = st.columns(2)
-            today_date_str = datetime.now().strftime("%d-%b-%y")
+        input_color_name = st.text_input("Color Name (색상명):", value=st.session_state.qtx_filename)
+        
+        # 1. 리스트에 담기 버튼
+        if st.button("➕ 현재 처방을 리스트에 추가", use_container_width=True):
+            res = top_results[selected_rank - 1]
+            dyes_list = []
+            for i, dye_raw in enumerate(res['combo']):
+                dyes_list.append({
+                    "dye_name": display_name_dict.get(dye_raw, dye_raw),
+                    "value": round(res['conc'][i], 4)
+                })
             
-            with r_col1:
-                # Color name을 QTX 파일명으로 기본 세팅
-                input_color_name = st.text_input("Color Name (색상명):", value=st.session_state.qtx_filename)
-                input_ref = st.text_input("Ref No. :", value="")
-                input_from = st.text_input("From :", value="Ohyoung Inc. /")
-            with r_col2:
-                # Option Letter 고정이므로 입력 칸 삭제, 나머지 배치
-                input_to = st.text_input("To :", value="Lab Manager")
-                input_date = st.text_input("Date :", value=today_date_str)
-                input_subject = st.text_input("Subject :", value="Recipe Recommendation")
+            de_str = f"{res['des'][0]:.2f}"
+            meta_str = f"{res['metamerism']:.2f}" if len(res['des']) > 1 else "-"
+            light1_short = light1_name.split()[0]
+            light2_short = light2_name.split()[0] if light2_name != "없음" else ""
+            
+            # 장바구니에 넣을 딕셔너리 생성
+            new_item = {
+                "dyes": dyes_list,
+                "de_cmc": de_str,
+                "metamerism": meta_str,
+                "color_name": input_color_name,
+                "option_letter": "R", # 필요시 변경 가능
+                "excel_color": st.session_state.qtx_excel_color,
+                "light1": light1_short,
+                "light2": light2_short
+            }
+            
+            st.session_state.accumulated_data.append(new_item)
+            st.success(f"✅ '{input_color_name}' 처방이 리스트에 추가되었습니다! (현재 총 {len(st.session_state.accumulated_data)}개)")
 
-        # 다운로드할 파일이 준비되지 않았을 때 (생성 전)
-        if st.session_state.final_excel_bytes is None:
-            if st.button("⚙️ 리포트 파일 생성하기", type="primary", use_container_width=True):
-                if not os.path.exists(TEMPLATE_FILE):
-                    st.error(f"등록된 템플릿 파일('{TEMPLATE_FILE}')을 같은 폴더에서 찾을 수 없습니다.")
-                else:
-                    with st.spinner("엑셀 파일을 생성하는 중입니다..."):
-                        try:
-                            all_extracted_data = []
-                            res = top_results[selected_rank - 1]
-                            dyes_list = []
-                            for i, dye_raw in enumerate(res['combo']):
-                                dyes_list.append({
-                                    "dye_name": display_name_dict.get(dye_raw, dye_raw),
-                                    "value": round(res['conc'][i], 4)
-                                })
-                            
-                            de_str = f"{res['des'][0]:.2f}"
-                            meta_str = f"{res['metamerism']:.2f}" if len(res['des']) > 1 else "-"
-                            
-                            # 띄어쓰기 기준으로 앞단어만 추출 (예: "TL84 (FL11)" -> "TL84")
-                            light1_short = light1_name.split()[0]
-                            light2_short = light2_name.split()[0] if light2_name != "없음" else ""
-                            
-                            # 무조건 1개 처방, option_letter는 "R" 고정, excel_color 추가
-                            all_extracted_data.append({
-                                "dyes": dyes_list,
-                                "de_cmc": de_str,
-                                "metamerism": meta_str,
-                                "color_name": input_color_name,
-                                "option_letter": "R",
-                                "excel_color": st.session_state.qtx_excel_color,
-                                "light1": light1_short,
-                                "light2": light2_short
-                            })
+# -----------------------------------------------------------
+# 결과창 바깥이나 사이드바, 혹은 하단에 "최종 엑셀 생성 영역" 배치
+# (col_results 의 들여쓰기가 끝나는 바깥쪽이나, 적절한 위치에 둡니다)
+# -----------------------------------------------------------
+st.markdown("---")
+st.markdown(f"### 📄 최종 엑셀 리포트 생성 (모인 데이터: {len(st.session_state.accumulated_data)}개)")
 
-                            with open(TEMPLATE_FILE, "rb") as f:
-                                template_bytes = BytesIO(f.read())
-                                
-                            user_inputs = [input_ref, input_from, input_to, input_date, input_subject]
-                            final_excel = fill_solution_excel(template_bytes, all_extracted_data, user_inputs)
-                            
-                            # 완성된 엑셀을 세션에 저장
-                            st.session_state.final_excel_bytes = final_excel.getvalue()
-                            st.session_state.final_excel_filename = f"최종_결과_{datetime.now().strftime('%H%M%S')}.xlsx"
-                            
-                            st.success("✨ 엑셀 파일이 준비되었습니다! 아래 버튼을 눌러 다운로드하세요.")
-                            st.rerun() # 화면을 새로고침하여 다운로드 버튼을 띄웁니다.
-                            
-                        except Exception as e:
-                            st.error(f"엑셀 생성 중 문제가 발생했습니다:\n\n{e}")
+if len(st.session_state.accumulated_data) > 0:
+    # 담아둔 컬러 이름들 미리보기
+    saved_colors = [item['color_name'] for item in st.session_state.accumulated_data]
+    st.info(f"**현재 담긴 색상들:** {', '.join(saved_colors)}")
+    
+    # 엑셀 전체 공통 정보 입력 (한 번만 들어가면 되므로 모아서 빼냅니다)
+    with st.expander("📝 리포트 기본 정보 (공통)", expanded=True):
+        r_col1, r_col2 = st.columns(2)
+        today_date_str = datetime.now().strftime("%d-%b-%y")
+        with r_col1:
+            input_ref = st.text_input("Ref No. :", value="")
+            input_from = st.text_input("From :", value="Ohyoung Inc. /")
+        with r_col2:
+            input_to = st.text_input("To :", value="Lab Manager")
+            input_date = st.text_input("Date :", value=today_date_str)
+            input_subject = st.text_input("Subject :", value="Recipe Recommendation")
 
-        # 다운로드 파일이 준비되었을 때
-        else:
-            st.download_button(
-                label="📥 엑셀 파일 다운로드",
-                data=st.session_state.final_excel_bytes,
-                file_name=st.session_state.final_excel_filename,
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                type="primary",
-                use_container_width=True
-            )
-            # 옵션을 바꾸고 다시 생성하고 싶을 때를 위한 리셋 버튼
-            if st.button("🔄 조건 변경 후 다시 생성하기", use_container_width=True):
-                st.session_state.final_excel_bytes = None
-                st.rerun()
+    col_btn1, col_btn2 = st.columns(2)
+    
+    with col_btn1:
+        if st.button("⚙️ 엑셀 파일 생성하기", type="primary", use_container_width=True):
+            if not os.path.exists(TEMPLATE_FILE):
+                st.error(f"등록된 템플릿 파일('{TEMPLATE_FILE}')을 찾을 수 없습니다.")
+            else:
+                with st.spinner("엑셀 파일을 생성하는 중입니다..."):
+                    try:
+                        with open(TEMPLATE_FILE, "rb") as f:
+                            template_bytes = BytesIO(f.read())
+                        
+                        user_inputs = [input_ref, input_from, input_to, input_date, input_subject]
+                        
+                        # accumulated_data 전체 리스트를 던져줍니다. (미리 짜두신 반복문이 여기서 빛을 발합니다)
+                        final_excel = fill_solution_excel(template_bytes, st.session_state.accumulated_data, user_inputs)
+                        
+                        st.session_state.final_excel_bytes = final_excel.getvalue()
+                        st.session_state.final_excel_filename = f"최종_결과_{datetime.now().strftime('%H%M%S')}.xlsx"
+                        st.success("✨ 엑셀 파일이 준비되었습니다!")
+                        
+                    except Exception as e:
+                        st.error(f"엑셀 생성 중 문제가 발생했습니다:\n\n{e}")
+
+    with col_btn2:
+        if st.button("🗑️ 리스트 비우기", use_container_width=True):
+            st.session_state.accumulated_data = []
+            st.session_state.final_excel_bytes = None
+            st.rerun()
+
+    # 파일이 생성되었을 때 다운로드 버튼 노출
+    if st.session_state.final_excel_bytes is not None:
+        st.download_button(
+            label="📥 완성된 엑셀 파일 다운로드",
+            data=st.session_state.final_excel_bytes,
+            file_name=st.session_state.final_excel_filename,
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            type="primary",
+            use_container_width=True
+        )
+else:
+    st.write("아직 리스트에 추가된 처방이 없습니다. QTX 파일을 분석하고 처방을 추가해주세요.")
