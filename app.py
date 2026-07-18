@@ -103,7 +103,7 @@ blank_ks = get_ks(blank_r)
 # 2. Streamlit 웹 UI 구성
 # ==========================================
 # 사이드바 고정
-st.set_page_config(layout="wide", initial_sidebar_state="expanded", page_title="3색 자동 처방 탐색기")
+st.set_page_config(layout="wide", initial_sidebar_state="expanded", page_title="T/S Colordata")
 
 # 사이드바 닫기 숨김 & 여백 조절
 st.markdown("""
