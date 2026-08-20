@@ -31,8 +31,6 @@ if "qtx_filename" not in st.session_state:
     st.session_state.qtx_filename = ""
 if "qtx_excel_color" not in st.session_state:
     st.session_state.qtx_excel_color = 14211288
-if "accumulated_data" not in st.session_state:
-    st.session_state.accumulated_data = []
 
 if "brand_selector" not in st.session_state: st.session_state.brand_selector = "직접 선택 (Manual)"
 if "l1" not in st.session_state: st.session_state.l1 = "D65"
@@ -73,123 +71,56 @@ if dye_mode == "Disperse":
 st.markdown(f"""
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
 <style>
-    /* Streamlit 기본 상단 헤더, 메뉴, 푸터 숨기기 */
     #MainMenu {{visibility: hidden;}}
     header {{visibility: hidden;}}
     footer {{visibility: hidden;}}
-    
-    /* 🌟 회전 애니메이션 정의 🌟 */
     @keyframes spin {{ 100% {{ transform: rotate(360deg); }} }}
+    .stApp {{ opacity: 1 !important; filter: none !important; }}
+    [data-testid="stAppViewBlockContainer"] {{ opacity: 1 !important; }}
+    [data-testid="stStatusWidget"] {{ display: none !important; }}
     
-    /* 처리 중 화면 하얗게 흐려짐(Dimming) 강제 방지 */
-    .stApp {{
-        opacity: 1 !important;
-        filter: none !important;
-    }}
-    [data-testid="stAppViewBlockContainer"] {{
-        opacity: 1 !important;
-    }}
-    /* 우측 상단 런닝 인디케이터 숨기기 */
-    [data-testid="stStatusWidget"] {{
-        display: none !important;
-    }}
-    
-    /* 상단 고정바 스타일 */
     .fixed-header {{
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100vw;
-        height: 60px;
-        background-color: #ffffff;
-        box-shadow: 0px 2px 10px rgba(0,0,0,0.1);
-        z-index: 999998;
-        display: flex;
-        align-items: center;
-        padding-left: 20px;
-        border-bottom: 1px solid #eaeaea;
+        position: fixed; top: 0; left: 0; width: 100vw; height: 60px;
+        background-color: #ffffff; box-shadow: 0px 2px 10px rgba(0,0,0,0.1);
+        z-index: 999998; display: flex; align-items: center;
+        padding-left: 20px; border-bottom: 1px solid #eaeaea;
     }}
-    .fixed-header img {{
-        width: 45px;
-        margin-right: 12px;
-    }}
-    .fixed-header h2 {{
-        margin: 0;
-        padding: 0;
-        font-size: 24px;
-        font-weight: 700;
-        color: #31333F;
-    }}
+    .fixed-header img {{ width: 45px; margin-right: 12px; }}
+    .fixed-header h2 {{ margin: 0; padding: 0; font-size: 24px; font-weight: 700; color: #31333F; }}
     
-    /* 본문 상단 여백 추가 */
-    .block-container {{
-        padding-top: 80px !important;
-    }}
-
-    /* Material Icon 보정 */
-    .material-symbols-outlined {{
-        line-height: 1 !important; 
-    }}
+    .block-container {{ padding-top: 80px !important; }}
+    .material-symbols-outlined {{ line-height: 1 !important; }}
     [data-testid="collapsedControl"] {{ display: none !important; }}
     [data-testid="stSidebar"] div.stButton {{ margin-bottom: -10px; }}
 
-    /* 상단 메뉴바 전용 확실한 타겟팅 */
     div[data-testid="stHorizontalBlock"]:has(#top-menu-marker) {{
-        position: fixed !important;
-        top: 10px !important;
-        left: 360px !important; 
-        width: 820px !important; 
-        z-index: 999999 !important;
-        align-items: center !important; 
+        position: fixed !important; top: 10px !important; left: 360px !important; 
+        width: 820px !important; z-index: 999999 !important; align-items: center !important; 
     }}
-
     div.element-container:has(#top-menu-marker) {{
-        display: none !important;
-        margin: 0 !important;
-        padding: 0 !important;
-        height: 0 !important;
+        display: none !important; margin: 0 !important; padding: 0 !important; height: 0 !important;
     }}
-
-    /* 드롭다운 스타일링 */
     div[data-testid="stHorizontalBlock"]:has(#top-menu-marker) div[data-baseweb="select"] {{
-        border: none !important;
-        background-color: transparent !important;
-        box-shadow: none !important;
-        cursor: pointer;
+        border: none !important; background-color: transparent !important; box-shadow: none !important; cursor: pointer;
     }}
     div[data-testid="stHorizontalBlock"]:has(#top-menu-marker) div[data-baseweb="select"] > div {{
-        border: none !important;
-        background-color: transparent !important;
-        padding-left: 8px;
-        padding-right: 8px;
+        border: none !important; background-color: transparent !important; padding-left: 8px; padding-right: 8px;
     }}
     div[data-testid="stHorizontalBlock"]:has(#top-menu-marker) div[data-baseweb="select"] * {{
-        color: #1f325c !important;
-        font-weight: 700 !important;
-        font-size: 15px !important;
+        color: #1f325c !important; font-weight: 700 !important; font-size: 15px !important;
     }}
     div[data-testid="stHorizontalBlock"]:has(#top-menu-marker) div[data-baseweb="select"]:hover {{
-        background-color: rgba(0,0,0,0.04) !important;
-        border-radius: 6px;
+        background-color: rgba(0,0,0,0.04) !important; border-radius: 6px;
     }}
-
-    /* 버튼 스타일링 */
     div[data-testid="stHorizontalBlock"]:has(#top-menu-marker) div.stButton > button {{
-        border-radius: 8px; 
-        padding: 0px 10px;
-        height: 38px;
-        min-height: 38px;
-        margin: 0 !important; 
+        border-radius: 8px; padding: 0px 10px; height: 38px; min-height: 38px; margin: 0 !important; 
     }}
 </style>
-
-<!-- 상단 메뉴바 렌더링 -->
 <div class="fixed-header">
     <img src="data:image/png;base64,{logo_base64}" onerror="this.style.display='none'">
     <h2>T/S Colordata <span style="font-size: 16px; color: #666;">({header_mode_text})</span></h2>
 </div>
 """, unsafe_allow_html=True)
-
 
 # ==========================================
 # [데이터 로드] 브랜드 및 광원 매핑
@@ -228,7 +159,6 @@ def on_brand_change():
         l2 = map_light_name(brand_row['Light2'])
         l3 = map_light_name(brand_row['Light3'])
         if l1 == "없음": l1 = "D65"
-        
         st.session_state.l1 = l1
         st.session_state.l2 = l2
         st.session_state.l3 = l3
@@ -238,69 +168,52 @@ def on_brand_change():
 # ==========================================
 def apply_dc_correction(light_name, de_val):
     if "TL84" in light_name:
-        if de_val <= 2.0:
-            corr = -0.1226 * (de_val**2) + 0.6539 * de_val + 0.1873
-        else:
-            corr = 1.0047 + 0.1635 * (de_val - 2.0)
-        return max(0.01, corr)
+        if de_val <= 2.0: return max(0.01, -0.1226 * (de_val**2) + 0.6539 * de_val + 0.1873)
+        else: return max(0.01, 1.0047 + 0.1635 * (de_val - 2.0))
     return de_val
-
 
 # ==========================================
 # 4. 데이터 및 염료 매핑 로드
 # ==========================================
 @st.cache_data
 def load_dye_data(mode):
-    if mode == "Reactive": file_name = 'dye_data.json'
-    elif mode == "Disperse": file_name = 'dye_data_disperse.json'
-    elif mode == "Reactive (CPB)": file_name = 'dye_data_cpb.json'
-    elif mode == "CDP": file_name = 'dye_data_CDP.json'
-    elif mode == "Acid": file_name = 'dye_data_acid.json'
-    else: file_name = 'dye_data.json'
-    
+    file_map = {
+        "Reactive": 'dye_data.json',
+        "Disperse": 'dye_data_disperse.json',
+        "Reactive (CPB)": 'dye_data_cpb.json',
+        "CDP": 'dye_data_CDP.json',
+        "Acid": 'dye_data_acid.json'
+    }
+    file_name = file_map.get(mode, 'dye_data.json')
     try:
         with open(file_name, 'r', encoding='utf-8') as f:
             raw_data = json.load(f)
-            valid_dye_db = {name.strip(): concs for name, concs in raw_data.items() if len(concs) > 0}
-            return valid_dye_db
+            return {name.strip(): concs for name, concs in raw_data.items() if len(concs) > 0}
     except FileNotFoundError:
         st.error(f"데이터 파일을 찾을 수 없습니다: {file_name}. 파일을 생성해주세요.")
         return {}
 
 @st.cache_data
 def load_dye_mapping(mode, _valid_keys):
-    if mode == "Reactive": file_name = 'dye_list.xlsx'
-    elif mode == "Disperse": file_name = 'dis_dye_list.xlsx'
-    elif mode == "Reactive (CPB)": file_name = 'cpb_dye_list.xlsx'
-    elif mode == "CDP": file_name = 'CDP_dye_list.xlsx'
-    elif mode == "Acid": file_name = 'acid_dye_list.xlsx'
-    else: file_name = 'dye_list.xlsx'
+    file_map = {
+        "Reactive": 'dye_list.xlsx',
+        "Disperse": 'dis_dye_list.xlsx',
+        "Reactive (CPB)": 'cpb_dye_list.xlsx',
+        "CDP": 'CDP_dye_list.xlsx',
+        "Acid": 'acid_dye_list.xlsx'
+    }
+    file_name = file_map.get(mode, 'dye_list.xlsx')
     
     try:
         df = pd.read_excel(file_name, header=None)
-        mapping_list = []
-        disp_dict = {}
-        missing_dyes = []
-        all_companies = set()
-        sort_order_dict = {}
+        mapping_list, disp_dict, missing_dyes, all_companies, sort_order_dict = [], {}, [], set(), {}
 
         for _, row in df.iterrows():
-            try:
-                sort_val = float(row[0]) if pd.notna(row[0]) else 999.0
-            except:
-                sort_val = 999.0
-                
-            raw_name = str(row[1]).strip()
-            display_name = str(row[2]).strip()
-            
-            companies = []
-            for col_idx in range(3, len(row)):
-                val = row[col_idx]
-                if pd.notna(val):
-                    c_name = str(val).strip()
-                    if c_name:
-                        companies.append(c_name)
-                        all_companies.add(c_name)
+            try: sort_val = float(row[0]) if pd.notna(row[0]) else 999.0
+            except: sort_val = 999.0
+            raw_name, display_name = str(row[1]).strip(), str(row[2]).strip()
+            companies = [str(row[i]).strip() for i in range(3, len(row)) if pd.notna(row[i]) and str(row[i]).strip()]
+            all_companies.update(companies)
                 
             if raw_name in _valid_keys:
                 mapping_list.append((raw_name, display_name, companies))
@@ -308,13 +221,9 @@ def load_dye_mapping(mode, _valid_keys):
                 sort_order_dict[raw_name] = sort_val
             else:
                 missing_dyes.append(raw_name)
-                
-        sorted_companies = sorted(list(all_companies))
-        return mapping_list, disp_dict, missing_dyes, sorted_companies, sort_order_dict
-        
+        return mapping_list, disp_dict, missing_dyes, sorted(list(all_companies)), sort_order_dict
     except Exception as e:
-        default_list = [(k, k, []) for k in sorted(list(_valid_keys))]
-        return default_list, {k: k for k in _valid_keys}, [], [], {}
+        return [(k, k, []) for k in sorted(list(_valid_keys))], {k: k for k in _valid_keys}, [], [], {}
 
 dye_db = load_dye_data(dye_mode)
 all_dyes_ordered, display_name_dict, missing_dyes, all_companies, sort_order_dict = load_dye_mapping(dye_mode, dye_db.keys())
@@ -422,8 +331,7 @@ def parse_datacolor_to_ks(block_text, is_batch=False):
     low_match = re.search(fr'{prefix}REFLLOW=(\d+)', block_text)
     r_match = re.search(fr'{prefix}R=([\d\.,\s]+)', block_text)
     
-    if not r_match:
-        raise ValueError("텍스트에서 반사율(R) 데이터를 찾을 수 없습니다.")
+    if not r_match: raise ValueError("텍스트에서 반사율(R) 데이터를 찾을 수 없습니다.")
         
     refl_points = int(points_match.group(1)) if points_match else 31
     refl_interval = int(interval_match.group(1)) if interval_match else 10
@@ -432,9 +340,7 @@ def parse_datacolor_to_ks(block_text, is_batch=False):
     wls = np.arange(refl_low, refl_low + refl_points * refl_interval, refl_interval)
     r_str = r_match.group(1)
     r_vals = [float(x.strip()) / 100.0 for x in r_str.split(',') if x.strip()]
-    
-    if len(r_vals) > refl_points:
-        r_vals = r_vals[:refl_points]
+    if len(r_vals) > refl_points: r_vals = r_vals[:refl_points]
     
     spectrum_map = {str(w): r for w, r in zip(wls, r_vals)}
     return get_ks_normalized(spectrum_map)
@@ -488,9 +394,7 @@ def get_all_dye_hex_dict(dye_mode):
 
             hex_col, _ = get_preview_hex(r_array_31, "D65")
             hex_dict[dye_name] = hex_col
-    except Exception:
-        pass
-        
+    except Exception: pass
     return hex_dict
 
 @st.cache_data
@@ -499,52 +403,33 @@ def load_fastness_db():
         file_path = "color_fastness.xlsx"
         df = pd.read_excel(file_path)
         return df
-    except Exception as e:
-        return None
+    except Exception: return None
 
 def predict_color_fastness(recipe, db_df):
-    if db_df is None:
-        return {"Error": "견뢰도 데이터베이스 파일(color_fastness.xlsx)을 찾을 수 없습니다."}
-        
-    predicted_results = {}
+    if db_df is None: return {"Error": "견뢰도 데이터베이스 파일(color_fastness.xlsx)을 찾을 수 없습니다."}
     recipe_dyes = db_df[db_df['염료명'].isin(recipe.keys())].copy()
-    
-    if recipe_dyes.empty:
-        return {"Error": "DB에 일치하는 염료가 없어 견뢰도를 예측할 수 없습니다."}
+    if recipe_dyes.empty: return {"Error": "DB에 일치하는 염료가 없어 견뢰도를 예측할 수 없습니다."}
 
     recipe_dyes['처방농도'] = recipe_dyes['염료명'].map(recipe)
     recipe_dyes['비율'] = recipe_dyes['처방농도'] / recipe_dyes['S/D\n1/1']
-    
     grade_columns = recipe_dyes.columns[2:-2] 
     max_ratio = recipe_dyes['비율'].max()
     
+    predicted_results = {}
     for col in grade_columns:
         min_grade = recipe_dyes[col].min()
-        
-        if max_ratio >= 1.5 and any(keyword in col for keyword in ['마찰', '세탁', '땀']):
-            min_grade -= 0.5
-        elif max_ratio <= 0.5 and '일광견뢰도' in col and '1/6' not in col:
-            min_grade -= 0.5
-            
+        if max_ratio >= 1.5 and any(keyword in col for keyword in ['마찰', '세탁', '땀']): min_grade -= 0.5
+        elif max_ratio <= 0.5 and '일광견뢰도' in col and '1/6' not in col: min_grade -= 0.5
         predicted_results[col] = max(1.0, min_grade)
-
     return predicted_results
 
 blank_r_str_reactive = "61.487896,64.536758,67.636276,70.483246,73.516251,75.622711,77.759293,79.583626,80.990044,82.235336,83.458176,84.331772,85.404106,86.164101,86.926323,87.612724,88.086739,88.541801,88.927353,89.348244,89.645943,89.882187,90.113014,90.397278,90.583130,90.746536,90.858932,91.020134,91.199127,91.403587,91.537102,91.670677,91.884819,91.980095,92.083275"
 blank_r_reactive = np.array([float(x.strip()) / 100.0 for x in blank_r_str_reactive.split(',') if x.strip()])
 blank_ks_reactive = get_ks(blank_r_reactive)
 
-disperse_blank_text = """
-[STANDARD_DATA 0]
-STD_REFLPOINTS=31,
-STD_REFLINTERVAL=10,
-STD_REFLLOW=400,
-STD_R=83.435000,84.975000,84.604500,83.743500,82.880500,82.520000,82.496500,82.684500,83.045000,83.254500,83.411000,83.424500,83.473500,83.565500,83.673000,83.827000,83.952000,84.098000,84.095000,84.015500,84.072500,84.145000,84.288500,84.341000,84.453000,84.588000,84.811500,84.936000,85.228500,85.319000,85.334000,
-"""
-try:
-    blank_ks_disperse = parse_datacolor_to_ks(disperse_blank_text, is_batch=False)
-except Exception:
-    blank_ks_disperse = blank_ks_reactive
+disperse_blank_text = "[STANDARD_DATA 0]\nSTD_REFLPOINTS=31,\nSTD_REFLINTERVAL=10,\nSTD_REFLLOW=400,\nSTD_R=83.435000,84.975000,84.604500,83.743500,82.880500,82.520000,82.496500,82.684500,83.045000,83.254500,83.411000,83.424500,83.473500,83.565500,83.673000,83.827000,83.952000,84.098000,84.095000,84.015500,84.072500,84.145000,84.288500,84.341000,84.453000,84.588000,84.811500,84.936000,85.228500,85.319000,85.334000,"
+try: blank_ks_disperse = parse_datacolor_to_ks(disperse_blank_text, is_batch=False)
+except Exception: blank_ks_disperse = blank_ks_reactive
 
 blank_r_str_disp_woven = "12.550282,12.662358,13.128991,15.679015,22.198656,49.159801,90.868118,115.976440,119.316971,108.527847,99.793015,95.301094,93.386421,90.213654,88.579010,86.774918,85.229942,84.013969,83.225197,82.656410,82.167915,82.044777,81.931137,81.882439,82.200607,82.416222,82.896469,83.570839,84.365234,85.158195,85.765289,86.293983,86.519203,86.480919,86.653557"
 blank_r_disp_woven = np.array([float(x.strip()) / 100.0 for x in blank_r_str_disp_woven.split(',') if x.strip()])
@@ -566,29 +451,17 @@ blank_r_acid = np.array([float(x.strip()) / 100.0 for x in blank_r_str_acid.spli
 blank_ks_acid = get_ks(blank_r_acid)
 
 
-if dye_mode == "Reactive":
-    blank_ks = blank_ks_reactive
-    option_letter = "R"
-elif dye_mode == "Disperse":
-    blank_ks = blank_ks_disp_woven if st.session_state.disperse_sub == "Woven" else blank_ks_disperse
-    option_letter = "D"
-elif dye_mode == "Reactive (CPB)":
-    blank_ks = blank_ks_cpb
-    option_letter = "R"
-elif dye_mode == "CDP":
-    blank_ks = blank_ks_cdp
-    option_letter = "Ac"
-elif dye_mode == "Acid":
-    blank_ks = blank_ks_acid
-    option_letter = "A"
+if dye_mode == "Reactive": blank_ks = blank_ks_reactive; option_letter = "R"
+elif dye_mode == "Disperse": blank_ks = blank_ks_disp_woven if st.session_state.disperse_sub == "Woven" else blank_ks_disperse; option_letter = "D"
+elif dye_mode == "Reactive (CPB)": blank_ks = blank_ks_cpb; option_letter = "R"
+elif dye_mode == "CDP": blank_ks = blank_ks_cdp; option_letter = "Ac"
+elif dye_mode == "Acid": blank_ks = blank_ks_acid; option_letter = "A"
 
 
 # ==========================================
 # 4.5 백포 선택 팝업 (Disperse 전용)
 # ==========================================
-def set_temp_disp(val):
-    st.session_state.temp_disp = val
-
+def set_temp_disp(val): st.session_state.temp_disp = val
 def confirm_disp_action():
     st.session_state.disperse_sub = st.session_state.temp_disp
     st.session_state.dye_mode = "Disperse"
@@ -598,29 +471,17 @@ def confirm_disp_action():
 @st.dialog("백포 선택 (Disperse)")
 def disperse_dialog():
     st.markdown("분산염료처방 탐색에 사용할 백포를 선택해주세요.")
-    
-    if "temp_disp" not in st.session_state:
-        st.session_state.temp_disp = st.session_state.disperse_sub
-
+    if "temp_disp" not in st.session_state: st.session_state.temp_disp = st.session_state.disperse_sub
     col1, col2 = st.columns(2)
-    with col1:
-        st.button("Jersey", use_container_width=True, 
-                  type="primary" if st.session_state.temp_disp == "Jersey" else "secondary", 
-                  on_click=set_temp_disp, args=("Jersey",), key="btn_dlg_jersey")
-    with col2:
-        st.button("Woven", use_container_width=True, 
-                  type="primary" if st.session_state.temp_disp == "Woven" else "secondary", 
-                  on_click=set_temp_disp, args=("Woven",), key="btn_dlg_woven")
-            
+    with col1: st.button("Jersey", use_container_width=True, type="primary" if st.session_state.temp_disp == "Jersey" else "secondary", on_click=set_temp_disp, args=("Jersey",), key="btn_dlg_jersey")
+    with col2: st.button("Woven", use_container_width=True, type="primary" if st.session_state.temp_disp == "Woven" else "secondary", on_click=set_temp_disp, args=("Woven",), key="btn_dlg_woven")
     st.markdown("<div style='margin-top: 10px;'></div>", unsafe_allow_html=True)
-    
-    if st.button("확인", use_container_width=True, type="primary", on_click=confirm_disp_action, key="btn_dlg_confirm"):
-        st.rerun()
+    if st.button("확인", use_container_width=True, type="primary", on_click=confirm_disp_action, key="btn_dlg_confirm"): st.rerun()
+
 
 # ==========================================
 # 5. Streamlit 웹 UI 구성
 # ==========================================
-
 top_menu_cols = st.columns([1, 1, 1.2, 1, 1, 2])
 with top_menu_cols[0]:
     st.button("Reactive", use_container_width=True, type="primary" if dye_mode == "Reactive" else "secondary", on_click=set_dye_mode, args=("Reactive",), key="btn_react_top")
@@ -629,22 +490,12 @@ with top_menu_cols[1]:
     if st.button("Disperse", use_container_width=True, type="primary" if dye_mode == "Disperse" else "secondary", key="btn_disp_top"):
         st.session_state.temp_disp = st.session_state.disperse_sub
         disperse_dialog()
-with top_menu_cols[2]:
-    st.button("Reactive (CPB)", use_container_width=True, type="primary" if dye_mode == "Reactive (CPB)" else "secondary", on_click=set_dye_mode, args=("Reactive (CPB)",), key="btn_cpb_top")
-with top_menu_cols[3]:
-    st.button("CDP", use_container_width=True, type="primary" if dye_mode == "CDP" else "secondary", on_click=set_dye_mode, args=("CDP",), key="btn_cdp_top")
-with top_menu_cols[4]:
-    st.button("Acid", use_container_width=True, type="primary" if dye_mode == "Acid" else "secondary", on_click=set_dye_mode, args=("Acid",), key="btn_acid_top")
+with top_menu_cols[2]: st.button("Reactive (CPB)", use_container_width=True, type="primary" if dye_mode == "Reactive (CPB)" else "secondary", on_click=set_dye_mode, args=("Reactive (CPB)",), key="btn_cpb_top")
+with top_menu_cols[3]: st.button("CDP", use_container_width=True, type="primary" if dye_mode == "CDP" else "secondary", on_click=set_dye_mode, args=("CDP",), key="btn_cdp_top")
+with top_menu_cols[4]: st.button("Acid", use_container_width=True, type="primary" if dye_mode == "Acid" else "secondary", on_click=set_dye_mode, args=("Acid",), key="btn_acid_top")
 with top_menu_cols[5]:
     company_options = ["전체 보기"] + all_companies
-    selected_company = st.selectbox(
-        "업체 선택", 
-        options=company_options, 
-        index=None, 
-        placeholder="염색업체 선택",
-        label_visibility="collapsed", 
-        key="company_select_top"
-    )
+    selected_company = st.selectbox("업체 선택", options=company_options, index=None, placeholder="염색업체 선택", label_visibility="collapsed", key="company_select_top")
 
 # ------------------------------------------
 # 왼쪽 사이드바 (염료 리스트)
@@ -657,11 +508,9 @@ with st.sidebar:
     if st.button("Ohyoung Dye Finder에서 불러오기", use_container_width=True, type="primary"):
         try:
             pasted_text = pyperclip.paste()
-            
             if pasted_text:
                 current_dye_db = load_dye_data(st.session_state.dye_mode)
                 current_all_dyes, _, _, _, _ = load_dye_mapping(st.session_state.dye_mode, current_dye_db.keys())
-
                 copied_names = [x.strip() for x in pasted_text.split(',')]
                 for name in copied_names:
                     if not name: continue
@@ -670,13 +519,10 @@ with st.sidebar:
                             if raw_name not in st.session_state.selected_dyes:
                                 st.session_state.selected_dyes.append(raw_name)
                             break
-            else:
-                st.warning("클립보드에 복사된 텍스트가 없습니다.")
-        except Exception as e:
-            st.error(f"클립보드에 접근할 수 없습니다: {e}")
+            else: st.warning("클립보드에 복사된 텍스트가 없습니다.")
+        except Exception as e: st.error(f"클립보드에 접근할 수 없습니다: {e}")
             
     st.markdown("---")
-
     dye_hex_dict = get_all_dye_hex_dict(st.session_state.dye_mode)
 
     filtered_dyes = []
@@ -687,13 +533,9 @@ with st.sidebar:
     for idx, (raw_name, display_name) in enumerate(filtered_dyes):
         btn_type = "primary" if raw_name in st.session_state.selected_dyes else "secondary"
         hex_col = dye_hex_dict.get(raw_name, "#FFFFFF")
-        
         col_color, col_btn = st.columns([1.5, 8.5])
-        with col_color:
-            st.markdown(f'<div style="background-color: {hex_col}; height: 35px; width: 100%; border-radius: 6px; border: 1px solid #ccc; margin-top: 4px; box-shadow: inset 0px 0px 4px rgba(0,0,0,0.1);"></div>', unsafe_allow_html=True)
-        with col_btn:
-            st.button(display_name, key=f"dye_{raw_name}_{idx}", use_container_width=True, type=btn_type, on_click=toggle_dye, args=(raw_name,))
-
+        with col_color: st.markdown(f'<div style="background-color: {hex_col}; height: 35px; width: 100%; border-radius: 6px; border: 1px solid #ccc; margin-top: 4px; box-shadow: inset 0px 0px 4px rgba(0,0,0,0.1);"></div>', unsafe_allow_html=True)
+        with col_btn: st.button(display_name, key=f"dye_{raw_name}_{idx}", use_container_width=True, type=btn_type, on_click=toggle_dye, args=(raw_name,))
 
 # ------------------------------------------
 # 메인 화면 (좌우 패널 구성)
@@ -701,7 +543,6 @@ with st.sidebar:
 col_menu, col_results = st.columns([1.2, 2], gap="large")
 
 with col_menu:
-    # --- Step 1: 타겟 색상 업로드 ---
     with st.container(border=True):
         st.markdown("<strong style='display: flex; align-items: center; font-size: 16px;'><span class='material-symbols-outlined' style='margin-right:6px;'>folder_open</span>Step 1. 타겟 색상 업로드 (QTX)</strong>", unsafe_allow_html=True)
         upload_col, color_col = st.columns([1.2, 1.8])
@@ -718,15 +559,13 @@ with col_menu:
                 for i in range(1, len(blocks), 2):
                     block_type = blocks[i]
                     block_content = blocks[i+1]
-                    
                     if block_type == 'STANDARD_DATA':
                         name_match = re.search(r'STD_NAME=(.*?)\n', block_content)
                         r_match = re.search(r'STD_R=([\d\.,\s]+)', block_content)
                         low_match = re.search(r'STD_REFLLOW=(\d+)', block_content)
                         if r_match:
                             name = name_match.group(1).strip().rstrip(',') if name_match else "Unknown Standard"
-                            r_str = r_match.group(1)
-                            r_vals = [float(x.strip()) / 100.0 for x in r_str.split(',') if x.strip()]
+                            r_vals = [float(x.strip()) / 100.0 for x in r_match.group(1).split(',') if x.strip()]
                             start_wl = int(low_match.group(1)) if low_match else 400
                             standards.append({'name': f"[STD] {name}", 'r_vals': r_vals, 'start_wl': start_wl})
                     elif block_type == 'BATCH_DATA':
@@ -735,8 +574,7 @@ with col_menu:
                         low_match = re.search(r'BAT_REFLLOW=(\d+)', block_content)
                         if r_match:
                             name = name_match.group(1).strip().rstrip(',') if name_match else "Unknown Batch"
-                            r_str = r_match.group(1)
-                            r_vals = [float(x.strip()) / 100.0 for x in r_str.split(',') if x.strip()]
+                            r_vals = [float(x.strip()) / 100.0 for x in r_match.group(1).split(',') if x.strip()]
                             start_wl = int(low_match.group(1)) if low_match else 400
                             standards.append({'name': f"[BAT] {name}", 'r_vals': r_vals, 'start_wl': start_wl})
                 
@@ -751,10 +589,8 @@ with col_menu:
                         st.info(f"인식된 타겟: **{standards[0]['name']}**", icon=":material/check_circle:")
                     
                     selected_std = standards[selected_std_idx]
-                    clean_name = selected_std['name'].replace('[STD] ', '').replace('[BAT] ', '')
-                    st.session_state.qtx_filename = clean_name
-                    raw_r_vals = selected_std['r_vals']
-                    start_wl = selected_std['start_wl']
+                    st.session_state.qtx_filename = selected_std['name'].replace('[STD] ', '').replace('[BAT] ', '')
+                    raw_r_vals, start_wl = selected_std['r_vals'], selected_std['start_wl']
 
                     current_wls = np.array([start_wl + i * 10 for i in range(len(raw_r_vals))])
                     target_wls = np.arange(360, 710, 10)
@@ -768,17 +604,12 @@ with col_menu:
                         preview_cols = st.columns(len(active_lights_ui))
                         for i, ln in enumerate(active_lights_ui):
                             hc, rgb = get_preview_hex(target_r[4:35], ln)
-                            if i == 0:
-                                st.session_state.qtx_excel_color = rgb[0] + (rgb[1] * 256) + (rgb[2] * 65536)
-                            with preview_cols[i]:
-                                st.markdown(f"""<div style="display: flex; flex-direction: column; align-items: center; justify-content: center; margin-top: 5px;"><div style="width: 100%; height: 50px; background-color: {hc}; border: 1px solid #ccc; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.2);"></div><div style="font-size: 11px; font-weight: bold; margin-top: 4px; color: #555;">{ln.split()[0]}</div></div>""", unsafe_allow_html=True)
-            except Exception as e:
-                st.error(f"QTX 분석 오류: {e}", icon=":material/error:")
+                            if i == 0: st.session_state.qtx_excel_color = rgb[0] + (rgb[1] * 256) + (rgb[2] * 65536)
+                            with preview_cols[i]: st.markdown(f"""<div style="display: flex; flex-direction: column; align-items: center; justify-content: center; margin-top: 5px;"><div style="width: 100%; height: 50px; background-color: {hc}; border: 1px solid #ccc; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.2);"></div><div style="font-size: 11px; font-weight: bold; margin-top: 4px; color: #555;">{ln.split()[0]}</div></div>""", unsafe_allow_html=True)
+            except Exception as e: st.error(f"QTX 분석 오류: {e}", icon=":material/error:")
         else:
-            with color_col:
-                st.markdown(f"""<div style="display: flex; flex-direction: column; align-items: center; justify-content: center; margin-top: 5px;"><div style="width: 100%; height: 50px; background-color: #f0f2f6; border: 1px dashed #ccc; border-radius: 8px;"></div><div style="font-size: 11px; margin-top: 4px; color: #999;">미리보기 대기중</div></div>""", unsafe_allow_html=True)
+            with color_col: st.markdown(f"""<div style="display: flex; flex-direction: column; align-items: center; justify-content: center; margin-top: 5px;"><div style="width: 100%; height: 50px; background-color: #f0f2f6; border: 1px dashed #ccc; border-radius: 8px;"></div><div style="font-size: 11px; margin-top: 4px; color: #999;">미리보기 대기중</div></div>""", unsafe_allow_html=True)
 
-    # --- Step 2: 검색 옵션 (브랜드 / 광원) ---
     with st.container(border=True):
         st.markdown("<strong style='display: flex; align-items: center; font-size: 16px;'><span class='material-symbols-outlined' style='margin-right:6px;'>settings</span>Step 2. 검색 옵션 설정</strong>", unsafe_allow_html=True)
         st.markdown("<div style='font-size: 13px; font-weight: bold; margin-bottom: 5px; margin-top: 10px; display: flex; align-items: center;'><span class='material-symbols-outlined' style='margin-right:4px; font-size:16px;'>label</span>브랜드별 광원 자동 세팅</div>", unsafe_allow_html=True)
@@ -794,127 +625,165 @@ with col_menu:
         light2_name = l_col2.selectbox("2차 광원", light_options_optional, key="l2") 
         light3_name = l_col3.selectbox("3차 광원", light_options_optional, key="l3") 
 
-    # --- Step 3: 실행 상태 및 버튼 ---
     with st.container(border=True):
         st.markdown("<strong style='display: flex; align-items: center; font-size: 16px;'><span class='material-symbols-outlined' style='margin-right:6px;'>science</span>Step 3. 실행 및 상태</strong>", unsafe_allow_html=True)
         st.markdown(f"현재 사이드바에서 선택된 염료: **{len(st.session_state.selected_dyes)}개**")
         st.button("선택 전체 초기화", use_container_width=True, disabled=(len(st.session_state.selected_dyes) == 0), on_click=clear_dyes, icon=":material/refresh:")
 
         run_search = False
-        if target_r is None:
-            st.button("처방 탐색 시작 (QTX 업로드 필요)", type="primary", use_container_width=True, disabled=True, icon=":material/rocket_launch:")
-        elif len(st.session_state.selected_dyes) < 1:
-            st.button("처방 탐색 시작 (염료 1개 이상 선택 필요)", type="primary", use_container_width=True, disabled=True, icon=":material/rocket_launch:")
-        else:
-            run_search = st.button("처방 탐색 시작", type="primary", use_container_width=True, icon=":material/rocket_launch:")
+        if target_r is None: st.button("처방 탐색 시작 (QTX 업로드 필요)", type="primary", use_container_width=True, disabled=True, icon=":material/rocket_launch:")
+        elif len(st.session_state.selected_dyes) < 1: st.button("처방 탐색 시작 (염료 1개 이상 선택 필요)", type="primary", use_container_width=True, disabled=True, icon=":material/rocket_launch:")
+        else: run_search = st.button("처방 탐색 시작", type="primary", use_container_width=True, icon=":material/rocket_launch:")
 
 
 # ==========================================
-# [우측 패널] 탭 분리: 검색 결과 / 장바구니 현황
+# [우측 패널] 검색 결과 화면
 # ==========================================
 with col_results:
-    tab_search, tab_cart = st.tabs([":material/search: 처방 탐색 결과", ":material/shopping_cart: 장바구니 데이터 현황"])
+    st.markdown("### <span class='material-symbols-outlined' style='font-size:26px; vertical-align: middle; margin-right:8px;'>search</span>처방 탐색 결과", unsafe_allow_html=True)
+    feedback_results = st.empty()
     
-    # --- [탭 1] 처방 탐색 결과 & 장바구니 추가 ---
-    with tab_search:
-        feedback_results = st.empty()
+    if run_search:
+        loading_overlay = st.empty()
+        loading_overlay.markdown("""<div style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(255, 255, 255, 0.8); z-index: 9999999; display: flex; flex-direction: column; justify-content: center; align-items: center; backdrop-filter: blur(2px);"><div style="background: white; padding: 40px 60px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); text-align: center; display: flex; flex-direction: column; align-items: center;"><span class="material-symbols-outlined" style="font-size: 56px; color: #1f325c; animation: spin 1.2s linear infinite;">sync</span><h2 style="margin-top: 20px; font-size: 26px; color: #333; font-weight: bold;">최적의 염료를 찾고있습니다..</h2><p style="margin-top: 10px; color: #666; font-size: 16px; line-height: 1.5;">조합을 탐색하고 정밀 분석을 수행하는 중입니다.<br>화면이 멈춘 것이 아니니 잠시만 기다려주세요.</p></div></div>""", unsafe_allow_html=True)
         
-        if run_search:
-            loading_overlay = st.empty()
-            loading_overlay.markdown("""<div style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(255, 255, 255, 0.8); z-index: 9999999; display: flex; flex-direction: column; justify-content: center; align-items: center; backdrop-filter: blur(2px);"><div style="background: white; padding: 40px 60px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); text-align: center; display: flex; flex-direction: column; align-items: center;"><span class="material-symbols-outlined" style="font-size: 56px; color: #1f325c; animation: spin 1.2s linear infinite;">sync</span><h2 style="margin-top: 20px; font-size: 26px; color: #333; font-weight: bold;">최적의 염료를 찾고있습니다..</h2><p style="margin-top: 10px; color: #666; font-size: 16px; line-height: 1.5;">조합을 탐색하고 정밀 분석을 수행하는 중입니다.<br>화면이 멈춘 것이 아니니 잠시만 기다려주세요.</p></div></div>""", unsafe_allow_html=True)
+        selected_pool = sorted(st.session_state.selected_dyes, key=lambda x: sort_order_dict.get(x, 999))
+        combos = []
+        max_dyes = min(3, len(selected_pool))
+        for r in range(1, max_dyes + 1):
+            combos.extend(list(itertools.combinations(selected_pool, r)))
+        
+        active_lights = [light1_name]
+        if light2_name != "없음": active_lights.append(light2_name)
+        if light3_name != "없음": active_lights.append(light3_name)
+        
+        progress_text = f"총 {len(combos)}개 조합에 대해 사전 탐색을 진행합니다..."
+        my_bar = st.progress(0, text=progress_text)
+        results = []
+        
+        shape_10nm = colour.SpectralShape(400, 700, 10)
+        cmfs = colour.MSDS_CMFS['CIE 1964 10 Degree Standard Observer'].copy().align(shape_10nm)
+        cmfs_values = cmfs.values
+        start_idx = 4 
+        target_r_31 = target_r[start_idx:35]
+        
+        precalc_lights = []
+        for l_name in active_lights:
+            light_data = LIGHT_MAP[l_name]
+            if isinstance(light_data, tuple):
+                W_X = light_data[0].copy().align(shape_10nm).values
+                W_Y = light_data[1].copy().align(shape_10nm).values
+                W_Z = light_data[2].copy().align(shape_10nm).values
+                W = np.column_stack((W_X, W_Y, W_Z))
+            else:
+                light_spd = light_data.copy().align(shape_10nm)
+                light_values = light_spd.values
+                dw = 10
+                k = np.sum(light_values * cmfs_values[:, 1]) * dw
+                W = (light_values[:, np.newaxis] * cmfs_values) * dw / k 
             
-            selected_pool = sorted(st.session_state.selected_dyes, key=lambda x: sort_order_dict.get(x, 999))
-            combos = []
-            max_dyes = min(3, len(selected_pool))
-            for r in range(1, max_dyes + 1):
-                combos.extend(list(itertools.combinations(selected_pool, r)))
+            wp_XYZ = np.sum(W, axis=0) 
+            wp_xy = colour.XYZ_to_xy(wp_XYZ)
+            XYZ_tgt = np.dot(target_r_31, W)
+            lab_tgt = colour.XYZ_to_Lab(XYZ_tgt, illuminant=wp_xy)
+            precalc_lights.append({'W': W, 'wp_xy': wp_xy, 'lab_tgt': lab_tgt})
             
-            active_lights = [light1_name]
-            if light2_name != "없음": active_lights.append(light2_name)
-            if light3_name != "없음": active_lights.append(light3_name)
-            
-            progress_text = f"총 {len(combos)}개 조합에 대해 사전 탐색을 진행합니다..."
-            my_bar = st.progress(0, text=progress_text)
-            results = []
-            
-            shape_10nm = colour.SpectralShape(400, 700, 10)
-            cmfs = colour.MSDS_CMFS['CIE 1964 10 Degree Standard Observer'].copy().align(shape_10nm)
-            cmfs_values = cmfs.values
-            start_idx = 4 
-            target_r_31 = target_r[start_idx:35]
-            
-            precalc_lights = []
-            for l_name in active_lights:
-                light_data = LIGHT_MAP[l_name]
-                if isinstance(light_data, tuple):
-                    W_X = light_data[0].copy().align(shape_10nm).values
-                    W_Y = light_data[1].copy().align(shape_10nm).values
-                    W_Z = light_data[2].copy().align(shape_10nm).values
-                    W = np.column_stack((W_X, W_Y, W_Z))
-                else:
-                    light_spd = light_data.copy().align(shape_10nm)
-                    light_values = light_spd.values
-                    dw = 10
-                    k = np.sum(light_values * cmfs_values[:, 1]) * dw
-                    W = (light_values[:, np.newaxis] * cmfs_values) * dw / k 
+        target_ks_31 = get_ks(target_r_31)
+        blank_ks_31 = blank_ks[start_idx:35]
+        net_target_ks = np.maximum(target_ks_31 - blank_ks_31, 0)
+        
+        candidates = []
+        for idx, combo in enumerate(combos):
+            if idx % 50 == 0:
+                my_bar.progress((idx + 1) / len(combos), text=f"총 {len(combos)}개 조합 고속 필터링 중... ({idx+1}/{len(combos)})")
                 
-                wp_XYZ = np.sum(W, axis=0) 
-                wp_xy = colour.XYZ_to_xy(wp_XYZ)
-                XYZ_tgt = np.dot(target_r_31, W)
-                lab_tgt = colour.XYZ_to_Lab(XYZ_tgt, illuminant=wp_xy)
-                precalc_lights.append({'W': W, 'wp_xy': wp_xy, 'lab_tgt': lab_tgt})
-                
-            target_ks_31 = get_ks(target_r_31)
-            blank_ks_31 = blank_ks[start_idx:35]
-            net_target_ks = np.maximum(target_ks_31 - blank_ks_31, 0)
+            dye_ks_interpolators = [] 
+            valid_combo = True
             
-            candidates = []
-            for idx, combo in enumerate(combos):
-                if idx % 50 == 0:
-                    my_bar.progress((idx + 1) / len(combos), text=f"총 {len(combos)}개 조합 고속 필터링 중... ({idx+1}/{len(combos)})")
-                    
-                dye_ks_interpolators = [] 
-                valid_combo = True
+            for name in combo:
+                available_concs = sorted([float(k) for k in dye_db[name].keys() if float(k) > 0])
+                if len(available_concs) == 0:
+                    valid_combo = False
+                    break
                 
-                for name in combo:
-                    available_concs = sorted([float(k) for k in dye_db[name].keys() if float(k) > 0])
-                    if len(available_concs) == 0:
-                        valid_combo = False
-                        break
-                    
-                    concs_with_zero = [0.0]
-                    ks_matrix = [np.zeros(len(blank_ks))]
+                concs_with_zero = [0.0]
+                ks_matrix = [np.zeros(len(blank_ks))]
 
-                    for c in available_concs:
-                        concs_with_zero.append(c)
-                        c_key = [k for k in dye_db[name].keys() if float(k) == c][0]
-                        spectrum_map = dye_db[name][c_key]
-                        ref_ks_total = get_ks_normalized(spectrum_map)
-                        ref_ks_net = np.maximum(ref_ks_total - blank_ks, 0)
-                        ks_matrix.append(ref_ks_net)
+                for c in available_concs:
+                    concs_with_zero.append(c)
+                    c_key = [k for k in dye_db[name].keys() if float(k) == c][0]
+                    spectrum_map = dye_db[name][c_key]
+                    ref_ks_total = get_ks_normalized(spectrum_map)
+                    ref_ks_net = np.maximum(ref_ks_total - blank_ks, 0)
+                    ks_matrix.append(ref_ks_net)
 
-                    concs_array = np.array(concs_with_zero)
-                    ks_matrix = np.array(ks_matrix)
-                    interp_func = PchipInterpolator(concs_array, ks_matrix, axis=0)
-                    dye_ks_interpolators.append((concs_array[-1], interp_func)) 
-                
-                if not valid_combo: continue
+                concs_array = np.array(concs_with_zero)
+                ks_matrix = np.array(ks_matrix)
+                interp_func = PchipInterpolator(concs_array, ks_matrix, axis=0)
+                dye_ks_interpolators.append((concs_array[-1], interp_func)) 
+            
+            if not valid_combo: continue
 
-                unit_ks_list_for_nnls = []
-                for i, name in enumerate(combo):
-                    max_c, interp_func = dye_ks_interpolators[i]
-                    available_concs = sorted([float(k) for k in dye_db[name].keys() if float(k) > 0])
-                    lowest_c = available_concs[0] if available_concs else max_c
-                    eval_c = min(0.1, lowest_c)
-                    unit_ks = interp_func(eval_c) / eval_c if eval_c > 0 else np.zeros(len(blank_ks))
-                    unit_ks_list_for_nnls.append(unit_ks)
+            unit_ks_list_for_nnls = []
+            for i, name in enumerate(combo):
+                max_c, interp_func = dye_ks_interpolators[i]
+                available_concs = sorted([float(k) for k in dye_db[name].keys() if float(k) > 0])
+                lowest_c = available_concs[0] if available_concs else max_c
+                eval_c = min(0.1, lowest_c)
+                unit_ks = interp_func(eval_c) / eval_c if eval_c > 0 else np.zeros(len(blank_ks))
+                unit_ks_list_for_nnls.append(unit_ks)
 
-                A = np.column_stack([u[start_idx:35] for u in unit_ks_list_for_nnls])
-                approx_conc, _ = nnls(A, net_target_ks)
-                
-                total_ks = np.copy(blank_ks)
+            A = np.column_stack([u[start_idx:35] for u in unit_ks_list_for_nnls])
+            approx_conc, _ = nnls(A, net_target_ks)
+            
+            total_ks = np.copy(blank_ks)
+            for i in range(len(combo)):
+                c = approx_conc[i]
+                max_c, interp_func = dye_ks_interpolators[i]
+                if c <= max_c: 
+                    dye_ks = interp_func(c)
+                else: 
+                    if dye_mode == "Acid":
+                        excess_ratio = (c - max_c) / max_c if max_c > 0 else 0
+                        damping = max(0.2, 0.85 - (0.2 * excess_ratio))
+                        dye_ks = interp_func(max_c) + (interp_func(max_c) / max_c) * (c - max_c) * damping
+                    else:
+                        dye_ks = interp_func(max_c) + (interp_func(max_c) / max_c) * (c - max_c) * 0.85 
+                total_ks += np.maximum(dye_ks, 0)
+            
+            est_r = 1 + total_ks - np.sqrt(total_ks**2 + 2 * total_ks)
+            est_r_31 = est_r[start_idx:35] 
+            
+            light1_data = precalc_lights[0]
+            XYZ_est_1 = np.dot(est_r_31, light1_data['W']) 
+            lab_est_1 = colour.XYZ_to_Lab(XYZ_est_1, illuminant=light1_data['wp_xy'])
+            approx_dE = colour.delta_E(lab_est_1, light1_data['lab_tgt'], method='CMC', l=2, c=1)
+            
+            if approx_dE <= 15.0:
+                candidates.append({
+                    'combo': combo,
+                    'approx_conc': approx_conc,
+                    'approx_dE': approx_dE,
+                    'interpolators': dye_ks_interpolators
+                })
+
+        candidates.sort(key=lambda x: x['approx_dE'])
+        top_candidates = candidates[:200]
+        total_cands = len(top_candidates)
+        
+        for idx, cand in enumerate(top_candidates):
+            combo = cand['combo']
+            approx_conc = cand['approx_conc']
+            dye_ks_interpolators = cand['interpolators']
+            
+            combo_display_names = [display_name_dict.get(name, name) for name in combo]
+            names_text = ", ".join(combo_display_names)
+            my_bar.progress((idx + 1) / total_cands, text=f"최적의 {total_cands}개 정밀 검색 중: {names_text} ({idx+1}/{total_cands})")
+
+            def evaluate_lights_local(conc, return_lab=False):
+                total_ks_local = np.copy(blank_ks)
                 for i in range(len(combo)):
-                    c = approx_conc[i]
+                    c = conc[i]
                     max_c, interp_func = dye_ks_interpolators[i]
                     if c <= max_c: 
                         dye_ks = interp_func(c)
@@ -925,364 +794,169 @@ with col_results:
                             dye_ks = interp_func(max_c) + (interp_func(max_c) / max_c) * (c - max_c) * damping
                         else:
                             dye_ks = interp_func(max_c) + (interp_func(max_c) / max_c) * (c - max_c) * 0.85 
-                    total_ks += np.maximum(dye_ks, 0)
+                    total_ks_local += np.maximum(dye_ks, 0)
                 
-                est_r = 1 + total_ks - np.sqrt(total_ks**2 + 2 * total_ks)
-                est_r_31 = est_r[start_idx:35] 
+                est_r_local = 1 + total_ks_local - np.sqrt(total_ks_local**2 + 2 * total_ks_local)
+                est_r_31_local = est_r_local[start_idx:35] 
                 
-                light1_data = precalc_lights[0]
-                XYZ_est_1 = np.dot(est_r_31, light1_data['W']) 
-                lab_est_1 = colour.XYZ_to_Lab(XYZ_est_1, illuminant=light1_data['wp_xy'])
-                approx_dE = colour.delta_E(lab_est_1, light1_data['lab_tgt'], method='CMC', l=2, c=1)
+                des = []
+                labs = []
                 
-                if approx_dE <= 15.0:
-                    candidates.append({
-                        'combo': combo,
-                        'approx_conc': approx_conc,
-                        'approx_dE': approx_dE,
-                        'interpolators': dye_ks_interpolators
+                l1_data = precalc_lights[0]
+                XYZ_est_1_local = np.dot(est_r_31_local, l1_data['W']) 
+                lab_est_1_local = colour.XYZ_to_Lab(XYZ_est_1_local, illuminant=l1_data['wp_xy'])
+                lab_tgt_1_local = l1_data['lab_tgt']
+                
+                for idx_l, light_data in enumerate(precalc_lights):
+                    XYZ_est_local = np.dot(est_r_31_local, light_data['W']) 
+                    lab_est_local = colour.XYZ_to_Lab(XYZ_est_local, illuminant=light_data['wp_xy'])
+                    
+                    if idx_l == 0:
+                        de = colour.delta_E(lab_est_local, light_data['lab_tgt'], method='CMC', l=2, c=1)
+                    else:
+                        lab_est_corr = lab_est_local + (lab_tgt_1_local - lab_est_1_local)
+                        de = colour.delta_E(lab_est_corr, light_data['lab_tgt'], method='CMC', l=2, c=1)
+                        de = apply_dc_correction(active_lights[idx_l], de)
+                        
+                    des.append(de)
+                    labs.append((lab_est_local, light_data['lab_tgt']))
+                
+                if return_lab: return des, labs
+                return des
+
+            def objective_local(conc):
+                des = evaluate_lights_local(conc)
+                weight_obj = des[0] 
+                if len(des) > 1: weight_obj += 0.01 * des[1] 
+                if len(des) > 2: weight_obj += 0.01 * des[2]
+                return weight_obj 
+
+            max_bound = 150.0 if dye_mode == "Reactive (CPB)" else 15.0
+            bnds = [(0.0, max_bound) for _ in range(len(combo))]
+            x0_start = np.clip(approx_conc, 0.0, max_bound)
+            
+            res = minimize(objective_local, x0=x0_start, bounds=bnds, method='SLSQP', options={'ftol': 1e-7, 'disp': False})
+            
+            if res.success:
+                conc = res.x
+                cleaned_conc = [c if c >= 0.0005 else 0.0 for c in conc]
+                total_conc = sum(cleaned_conc)
+                if total_conc == 0: continue
+                
+                final_des = evaluate_lights_local(cleaned_conc)
+                
+                if final_des[0] < 20.0:
+                    active_dyes_count = sum(1 for c in cleaned_conc if c > 0.0)
+                    metamerism_index = 0
+                    if len(final_des) > 1: metamerism_index += final_des[1]
+                    if len(final_des) > 2: metamerism_index += final_des[2]
+                    
+                    results.append({
+                        'combo': combo, 'conc': [round(c, 4) for c in cleaned_conc],
+                        'des': final_des, 'metamerism': metamerism_index,
+                        'total_conc': round(total_conc, 4), 'active_count': active_dyes_count 
                     })
 
-            candidates.sort(key=lambda x: x['approx_dE'])
-            top_candidates = candidates[:200]
-            total_cands = len(top_candidates)
+        loading_overlay.empty()
+        my_bar.empty() 
+        
+        if len(results) > 0:
+            def sort_key(x):
+                dE_primary = x['des'][0]
+                dE_meta_a = x['des'][1] if len(x['des']) > 1 else 999
+                dE_meta_b = x['des'][2] if len(x['des']) > 2 else 999
+                return (round(dE_primary, 4), round(dE_meta_a, 4), round(dE_meta_b, 4), round(x['total_conc'], 4))
+
+            results.sort(key=sort_key)
+            unique_results = []
+            seen_combinations = set()
             
-            for idx, cand in enumerate(top_candidates):
-                combo = cand['combo']
-                approx_conc = cand['approx_conc']
-                dye_ks_interpolators = cand['interpolators']
-                
-                combo_display_names = [display_name_dict.get(name, name) for name in combo]
-                names_text = ", ".join(combo_display_names)
-                my_bar.progress((idx + 1) / total_cands, text=f"최적의 {total_cands}개 정밀 검색 중: {names_text} ({idx+1}/{total_cands})")
-
-                def evaluate_lights_local(conc, return_lab=False):
-                    total_ks_local = np.copy(blank_ks)
-                    for i in range(len(combo)):
-                        c = conc[i]
-                        max_c, interp_func = dye_ks_interpolators[i]
-                        if c <= max_c: 
-                            dye_ks = interp_func(c)
-                        else: 
-                            if dye_mode == "Acid":
-                                excess_ratio = (c - max_c) / max_c if max_c > 0 else 0
-                                damping = max(0.2, 0.85 - (0.2 * excess_ratio))
-                                dye_ks = interp_func(max_c) + (interp_func(max_c) / max_c) * (c - max_c) * damping
-                            else:
-                                dye_ks = interp_func(max_c) + (interp_func(max_c) / max_c) * (c - max_c) * 0.85 
-                        total_ks_local += np.maximum(dye_ks, 0)
-                    
-                    est_r_local = 1 + total_ks_local - np.sqrt(total_ks_local**2 + 2 * total_ks_local)
-                    est_r_31_local = est_r_local[start_idx:35] 
-                    
-                    des = []
-                    labs = []
-                    
-                    l1_data = precalc_lights[0]
-                    XYZ_est_1_local = np.dot(est_r_31_local, l1_data['W']) 
-                    lab_est_1_local = colour.XYZ_to_Lab(XYZ_est_1_local, illuminant=l1_data['wp_xy'])
-                    lab_tgt_1_local = l1_data['lab_tgt']
-                    
-                    for idx_l, light_data in enumerate(precalc_lights):
-                        XYZ_est_local = np.dot(est_r_31_local, light_data['W']) 
-                        lab_est_local = colour.XYZ_to_Lab(XYZ_est_local, illuminant=light_data['wp_xy'])
-                        
-                        if idx_l == 0:
-                            de = colour.delta_E(lab_est_local, light_data['lab_tgt'], method='CMC', l=2, c=1)
-                        else:
-                            lab_est_corr = lab_est_local + (lab_tgt_1_local - lab_est_1_local)
-                            de = colour.delta_E(lab_est_corr, light_data['lab_tgt'], method='CMC', l=2, c=1)
-                            de = apply_dc_correction(active_lights[idx_l], de)
-                            
-                        des.append(de)
-                        labs.append((lab_est_local, light_data['lab_tgt']))
-                    
-                    if return_lab: return des, labs
-                    return des
-
-                def objective_local(conc):
-                    des = evaluate_lights_local(conc)
-                    weight_obj = des[0] 
-                    if len(des) > 1: weight_obj += 0.01 * des[1] 
-                    if len(des) > 2: weight_obj += 0.01 * des[2]
-                    return weight_obj 
-
-                max_bound = 150.0 if dye_mode == "Reactive (CPB)" else 15.0
-                bnds = [(0.0, max_bound) for _ in range(len(combo))]
-                x0_start = np.clip(approx_conc, 0.0, max_bound)
-                
-                res = minimize(objective_local, x0=x0_start, bounds=bnds, method='SLSQP', options={'ftol': 1e-7, 'disp': False})
-                
-                if res.success:
-                    conc = res.x
-                    cleaned_conc = [c if c >= 0.0005 else 0.0 for c in conc]
-                    total_conc = sum(cleaned_conc)
-                    if total_conc == 0: continue
-                    
-                    final_des = evaluate_lights_local(cleaned_conc)
-                    
-                    if final_des[0] < 20.0:
-                        active_dyes_count = sum(1 for c in cleaned_conc if c > 0.0)
-                        metamerism_index = 0
-                        if len(final_des) > 1: metamerism_index += final_des[1]
-                        if len(final_des) > 2: metamerism_index += final_des[2]
-                        
-                        results.append({
-                            'combo': combo, 'conc': [round(c, 4) for c in cleaned_conc],
-                            'des': final_des, 'metamerism': metamerism_index,
-                            'total_conc': round(total_conc, 4), 'active_count': active_dyes_count 
-                        })
-
-            loading_overlay.empty()
-            my_bar.empty() 
-            
-            if len(results) > 0:
-                def sort_key(x):
-                    dE_primary = x['des'][0]
-                    dE_meta_a = x['des'][1] if len(x['des']) > 1 else 999
-                    dE_meta_b = x['des'][2] if len(x['des']) > 2 else 999
-                    return (round(dE_primary, 4), round(dE_meta_a, 4), round(dE_meta_b, 4), round(x['total_conc'], 4))
-
-                results.sort(key=sort_key)
-                unique_results = []
-                seen_combinations = set()
-                
-                for res in results:
-                    active_dyes = []
-                    for i, dye_name in enumerate(res['combo']):
-                        if res['conc'][i] > 0:
-                            active_dyes.append(dye_name)
-                    
-                    combo_sig = "|".join(sorted(active_dyes))
-                    if combo_sig not in seen_combinations:
-                        seen_combinations.add(combo_sig)
-                        unique_results.append(res)
-                
-                st.session_state.top_results = unique_results[:10]
-            else:
-                st.session_state.top_results = []
-                st.error("유효한 처방을 찾지 못했습니다.", icon=":material/error:")
-
-        if st.session_state.top_results:
-            top_results = st.session_state.top_results
-            selected_pool = sorted(st.session_state.selected_dyes, key=lambda x: sort_order_dict.get(x, 999))
-            
-            used_dyes_in_top10 = set()
-            for res in top_results:
-                for i, dye_raw in enumerate(res['combo']):
+            for res in results:
+                active_dyes = []
+                for i, dye_name in enumerate(res['combo']):
                     if res['conc'][i] > 0:
-                        used_dyes_in_top10.add(dye_raw)
-                        
-            active_pool = [dye for dye in selected_pool if dye in used_dyes_in_top10]
+                        active_dyes.append(dye_name)
+                
+                combo_sig = "|".join(sorted(active_dyes))
+                if combo_sig not in seen_combinations:
+                    seen_combinations.add(combo_sig)
+                    unique_results.append(res)
             
-            row_labels = [f"dE(CMC) {light1_name} (Primary)"]
-            if light2_name != "없음": row_labels.append(f"Metamerism {light2_name}")
-            if light3_name != "없음": row_labels.append(f"Metamerism {light3_name}")
-            row_labels.append("Total concentration [%]")
-            row_labels.extend([display_name_dict.get(dye, dye) for dye in active_pool])
-            
-            df_dict = {"Property / Dyestuff": row_labels}
-            for rank, res in enumerate(top_results):
-                col_name = f"{rank+1}(3)"
-                col_data = [f"{max(res['des'][0], 0.01):.2f}"]
-                
-                light_idx = 1
-                if light2_name != "없음":
-                    col_data.append(f"{max(res['des'][light_idx], 0.01):.2f}") 
-                    light_idx += 1
-                if light3_name != "없음":
-                    col_data.append(f"{max(res['des'][light_idx], 0.01):.2f}") 
-                    
-                col_data.append(f"{res['total_conc']:.4f}") 
-                
-                for dye in active_pool:
-                    if dye in res['combo']:
-                        dye_idx = res['combo'].index(dye)
-                        val = res['conc'][dye_idx]
-                        col_data.append(f"{val:.4f}" if val > 0 else "")
-                    else: col_data.append("")
-                df_dict[col_name] = col_data
-            
-            df = pd.DataFrame(df_dict)
-            df.set_index("Property / Dyestuff", inplace=True)
-            
-            def color_rows(s):
-                if s.name.startswith('dE(CMC)'): return ['background-color: #e6f2ff; font-weight: bold'] * len(s)
-                elif s.name.startswith('Metamerism'): return ['background-color: #fff9e6; color: #d97706'] * len(s)
-                elif s.name == 'Total concentration [%]': return ['background-color: #f3f4f6; font-weight: bold'] * len(s)
-                else: return [''] * len(s)
-            
-            styled_df = df.style.apply(color_rows, axis=1)
-            dynamic_height = (len(df) + 1) * 36 
-            st.dataframe(styled_df, use_container_width=True, height=dynamic_height)
-
-            # --- 장바구니 추가 UI ---
-            with st.container(border=True):
-                st.markdown("<h4 style='display: flex; align-items: center; margin-bottom: 0;'><span class='material-symbols-outlined' style='margin-right:8px;'>add_shopping_cart</span>리스트에 처방 추가하기</h4>", unsafe_allow_html=True)
-                
-                available_ranks = list(range(1, len(top_results) + 1))
-                selected_rank = st.radio("추가할 순위 선택", options=available_ranks, horizontal=True)
-                input_color_name = st.text_input("Color Name (색상명):", value=st.session_state.qtx_filename)
-                
-                st.markdown("<div style='font-size: 14px; font-weight:bold; margin-top: 10px; display: flex; align-items: center;'><span class='material-symbols-outlined' style='margin-right:4px; font-size:16px;'>balance</span>처방 농도 세부 설정</div>", unsafe_allow_html=True)
-                apply_blend = st.checkbox("혼방 비율 (CVC / T/C) 적용하기")
-                ratio_factor = 1.0 
-                
-                if apply_blend:
-                    col_b1, col_b2 = st.columns(2)
-                    cotton_ratio = col_b1.number_input("Cotton (면) 비율 (%)", min_value=0, max_value=100, value=50, step=1)
-                    poly_ratio = col_b2.number_input("Poly (폴리) 비율 (%)", min_value=0, max_value=100, value=50, step=1)
-                    
-                    if dye_mode in ["Reactive", "Reactive (CPB)"]:
-                        ratio_factor = cotton_ratio / 100.0
-                        st.caption(f"적용 비율: **{cotton_ratio}%**")
-                    else:
-                        ratio_factor = poly_ratio / 100.0
-                        st.caption(f"적용 비율: **{poly_ratio}%**")
-                
-                apply_pdps = False
-                if dye_mode == "Reactive (CPB)":
-                    apply_pdps = st.checkbox("PDPS 적용 (처방 농도의 75%만 산출)")
-                    if apply_pdps:
-                        ratio_factor *= 0.75
-                        st.caption("PDPS 적용: **75%** 산출")
-
-                if st.button("현재 처방을 리스트에 추가", type="primary", use_container_width=True, icon=":material/add:"):
-                    res = top_results[selected_rank - 1]
-                    dyes_list = []
-                    for i, dye_raw in enumerate(res['combo']):
-                        val = res['conc'][i]
-                        if val > 0:
-                            adjusted_val = val * ratio_factor
-                            dyes_list.append({"dye_name": display_name_dict.get(dye_raw, dye_raw), "value": round(adjusted_val, 4)})
-                    
-                    de_str = f"{max(res['des'][0], 0.01):.2f}"
-                    light_idx = 1
-                    meta2_str = f"{max(res['des'][light_idx], 0.01):.2f}" if light2_name != "없음" else "-"
-                    if light2_name != "없음": light_idx += 1
-                    meta3_str = f"{max(res['des'][light_idx], 0.01):.2f}" if light3_name != "없음" else "-"
-                    
-                    light1_short = light1_name.split()[0]
-                    light2_short = light2_name.split()[0] if light2_name != "없음" else ""
-                    light3_short = light3_name.split()[0] if light3_name != "없음" else ""
-                    
-                    active_data_dict = {
-                        "dyes": dyes_list,
-                        "de_cmc": de_str,
-                        "metamerism2": meta2_str,
-                        "metamerism3": meta3_str,
-                        "light1": light1_short,
-                        "light2": light2_short,
-                        "light3": light3_short
-                    }
-
-                    cart_mode = None
-                    if st.session_state.accumulated_data:
-                        first_item = st.session_state.accumulated_data[0]
-                        if 'R' in first_item and 'D' in first_item: cart_mode = 'RD'
-                        elif 'CPB' in first_item: cart_mode = 'CPB'
-                        elif 'Ac' in first_item: cart_mode = 'Ac'
-                        elif 'A' in first_item: cart_mode = 'A'
-                        elif 'R' in first_item: cart_mode = 'R'
-                        elif 'D' in first_item: cart_mode = 'D'
-
-                    existing_item = next((item for item in st.session_state.accumulated_data if item['color_name'] == input_color_name and option_letter not in item), None)
-                    is_valid = True
-                    error_msg = ""
-                    
-                    if not existing_item and cart_mode is not None:
-                        if cart_mode == 'CPB' and option_letter != 'CPB':
-                            is_valid, error_msg = False, "장바구니가 'CPB' 모드입니다. 다른 염료를 추가할 수 없습니다."
-                        elif cart_mode == 'Ac' and option_letter != 'Ac':
-                            is_valid, error_msg = False, "장바구니가 'CDP' 모드입니다. 다른 모드의 염료를 추가할 수 없습니다."
-                        elif cart_mode == 'A' and option_letter != 'A':
-                            is_valid, error_msg = False, "장바구니가 'Acid' 모드입니다. 다른 모드의 염료를 추가할 수 없습니다."
-                        elif cart_mode != 'CPB' and option_letter == 'CPB':
-                            is_valid, error_msg = False, "장바구니에 다른 염료가 있습니다. CPB 처방을 추가할 수 없습니다."
-                        elif cart_mode != 'Ac' and option_letter == 'Ac':
-                            is_valid, error_msg = False, "장바구니에 다른 염료가 있습니다. CDP 처방을 추가할 수 없습니다."
-                        elif cart_mode != 'A' and option_letter == 'A':
-                            is_valid, error_msg = False, "장바구니에 다른 염료가 있습니다. Acid 처방을 추가할 수 없습니다."
-                        elif cart_mode != 'RD':
-                            if cart_mode == 'R' and option_letter == 'D':
-                                is_valid, error_msg = False, "혼합(CVC)을 원하시면 첫 번째 색상에 분산(D) 염료를 먼저 추가해주세요."
-                            elif cart_mode == 'D' and option_letter == 'R':
-                                is_valid, error_msg = False, "혼합(CVC)을 원하시면 첫 번째 색상에 반응성(R) 염료를 먼저 추가해주세요."
-                            
-                    if not is_valid:
-                        feedback_results.error(error_msg, icon=":material/error:")
-                    else:
-                        if existing_item:
-                            existing_item[option_letter] = active_data_dict
-                        else:
-                            new_item = {
-                                "color_name": input_color_name,
-                                "excel_color": st.session_state.qtx_excel_color,
-                                option_letter: active_data_dict
-                            }
-                            st.session_state.accumulated_data.append(new_item)
-                        
-                        success_msg = f"'{input_color_name}' 처방 리스트 추가 완료! (총 {len(st.session_state.accumulated_data)}개)"
-                        if apply_blend or apply_pdps:
-                            success_msg = f"농도 비율({ratio_factor*100:.1f}%) 적용하여 " + success_msg
-                        feedback_results.success(success_msg, icon=":material/check_circle:")
-
-                # --- 견뢰도 분석 표시 ---
-                res = top_results[selected_rank - 1]
-                fastness_db = load_fastness_db()
-                recipe_for_pred = {display_name_dict.get(dye_raw, dye_raw): res['conc'][i] for i, dye_raw in enumerate(res['combo']) if res['conc'][i] > 0}
-                pred_result = predict_color_fastness(recipe_for_pred, fastness_db)
-                
-                with st.expander(f"[{input_color_name}] 선택된 처방 예상 견뢰도 분석", icon=":material/science:"):
-                    if "Error" in pred_result:
-                        st.warning(pred_result["Error"], icon=":material/warning:")
-                    else:
-                        st.markdown("<div style='font-size: 12px; color: #666; margin-bottom: 5px;'>※ S/D 1/1 대비 농도 패널티 반영 수치입니다.</div>", unsafe_allow_html=True)
-                        pred_df = pd.DataFrame({k.replace('\n', ' '): [v] for k, v in pred_result.items()})
-                        st.dataframe(pred_df, hide_index=True, use_container_width=True)
+            st.session_state.top_results = unique_results[:10]
         else:
-            st.info("좌측 패널에서 타겟 색상을 업로드하고 처방 탐색을 시작해주세요.", icon=":material/info:")
+            st.session_state.top_results = []
+            st.error("유효한 처방을 찾지 못했습니다.", icon=":material/error:")
 
-    # --- [탭 2] 장바구니 현황 데이터 상세 열람 ---
-    with tab_cart:
-        if len(st.session_state.accumulated_data) > 0:
-            with st.container(border=True):
-                st.markdown(f"<h4 style='display: flex; align-items: center;'><span class='material-symbols-outlined' style='margin-right:8px;'>shopping_cart</span>현재 장바구니 현황 (총 {len(st.session_state.accumulated_data)}개)</h4>", unsafe_allow_html=True)
-                
-                cart_records = []
-                for item in st.session_state.accumulated_data:
-                    modes = []
-                    if 'R' in item: modes.append('Reactive')
-                    if 'D' in item: modes.append('Disperse')
-                    if 'CPB' in item: modes.append('Reactive (CPB)')
-                    if 'Ac' in item: modes.append('CDP')
-                    if 'A' in item: modes.append('Acid')
-                    cart_records.append({"색상명 (Color Name)": item['color_name'], "포함된 염료 모드": ", ".join(modes)})
-                
-                st.dataframe(pd.DataFrame(cart_records), use_container_width=True, hide_index=True)
-                
-                if st.button("장바구니 비우기", use_container_width=True, icon=":material/delete:"):
-                    st.session_state.accumulated_data = []
-                    st.rerun()
-
-            # 장바구니 내 데이터 추출 상세 보기 추가
-            with st.container(border=True):
-                st.markdown("<h4 style='display: flex; align-items: center;'><span class='material-symbols-outlined' style='margin-right:8px;'>analytics</span>적재된 처방 데이터 상세 확인</h4>", unsafe_allow_html=True)
-                
-                for idx, item in enumerate(st.session_state.accumulated_data):
-                    st.markdown(f"##### 🎨 색상 {idx+1}: **{item['color_name']}**")
+    if st.session_state.top_results:
+        top_results = st.session_state.top_results
+        selected_pool = sorted(st.session_state.selected_dyes, key=lambda x: sort_order_dict.get(x, 999))
+        
+        used_dyes_in_top10 = set()
+        for res in top_results:
+            for i, dye_raw in enumerate(res['combo']):
+                if res['conc'][i] > 0:
+                    used_dyes_in_top10.add(dye_raw)
                     
-                    for letter in ['R', 'D', 'CPB', 'Ac', 'A']:
-                        if letter in item:
-                            data = item[letter]
-                            mode_title = {'R':'Reactive', 'D':'Disperse', 'CPB':'Reactive (CPB)', 'Ac':'CDP', 'A':'Acid'}[letter]
-                            st.markdown(f"- **모드**: {mode_title} | **dE(CMC)**: `{data['de_cmc']}` (광원: {data['light1']})")
-                            
-                            # 염료 배합표 출력
-                            dye_df_list = []
-                            for d in data['dyes']:
-                                dye_df_list.append({"염료명 (Dyestuff Name)": d['dye_name'], "농도값 (%)": d['value']})
-                            st.dataframe(pd.DataFrame(dye_df_list), use_container_width=True, hide_index=True)
-                    st.markdown("---")
-        else:
-            st.info("장바구니가 비어 있습니다. [처방 탐색 결과] 탭에서 원하는 처방을 리스트에 추가해주세요.", icon=":material/info:")
+        active_pool = [dye for dye in selected_pool if dye in used_dyes_in_top10]
+        
+        row_labels = [f"dE(CMC) {light1_name} (Primary)"]
+        if light2_name != "없음": row_labels.append(f"Metamerism {light2_name}")
+        if light3_name != "없음": row_labels.append(f"Metamerism {light3_name}")
+        row_labels.append("Total concentration [%]")
+        row_labels.extend([display_name_dict.get(dye, dye) for dye in active_pool])
+        
+        df_dict = {"Property / Dyestuff": row_labels}
+        for rank, res in enumerate(top_results):
+            col_name = f"{rank+1}(3)"
+            col_data = [f"{max(res['des'][0], 0.01):.2f}"]
+            
+            light_idx = 1
+            if light2_name != "없음":
+                col_data.append(f"{max(res['des'][light_idx], 0.01):.2f}") 
+                light_idx += 1
+            if light3_name != "없음":
+                col_data.append(f"{max(res['des'][light_idx], 0.01):.2f}") 
+                
+            col_data.append(f"{res['total_conc']:.4f}") 
+            
+            for dye in active_pool:
+                if dye in res['combo']:
+                    dye_idx = res['combo'].index(dye)
+                    val = res['conc'][dye_idx]
+                    col_data.append(f"{val:.4f}" if val > 0 else "")
+                else: col_data.append("")
+            df_dict[col_name] = col_data
+        
+        df = pd.DataFrame(df_dict)
+        df.set_index("Property / Dyestuff", inplace=True)
+        
+        def color_rows(s):
+            if s.name.startswith('dE(CMC)'): return ['background-color: #e6f2ff; font-weight: bold'] * len(s)
+            elif s.name.startswith('Metamerism'): return ['background-color: #fff9e6; color: #d97706'] * len(s)
+            elif s.name == 'Total concentration [%]': return ['background-color: #f3f4f6; font-weight: bold'] * len(s)
+            else: return [''] * len(s)
+        
+        styled_df = df.style.apply(color_rows, axis=1)
+        dynamic_height = (len(df) + 1) * 36 
+        st.dataframe(styled_df, use_container_width=True, height=dynamic_height)
+
+        # --- 견뢰도 분석 표시 (장바구니 로직 제거됨) ---
+        with st.container(border=True):
+            st.markdown("<h4 style='display: flex; align-items: center; margin-bottom: 0;'><span class='material-symbols-outlined' style='margin-right:8px;'>science</span>탐색된 처방 예상 견뢰도 분석</h4>", unsafe_allow_html=True)
+            available_ranks = list(range(1, len(top_results) + 1))
+            selected_rank = st.radio("견뢰도를 확인할 처방 순위 선택:", options=available_ranks, horizontal=True)
+            
+            res = top_results[selected_rank - 1]
+            fastness_db = load_fastness_db()
+            recipe_for_pred = {display_name_dict.get(dye_raw, dye_raw): res['conc'][i] for i, dye_raw in enumerate(res['combo']) if res['conc'][i] > 0}
+            pred_result = predict_color_fastness(recipe_for_pred, fastness_db)
+            
+            if "Error" in pred_result:
+                st.warning(pred_result["Error"], icon=":material/warning:")
+            else:
+                st.markdown("<div style='font-size: 12px; color: #666; margin-bottom: 5px;'>※ S/D 1/1 대비 농도 패널티 반영 수치입니다.</div>", unsafe_allow_html=True)
+                pred_df = pd.DataFrame({k.replace('\n', ' '): [v] for k, v in pred_result.items()})
+                st.dataframe(pred_df, hide_index=True, use_container_width=True)
+
+    elif not run_search:
+        st.info("좌측 패널에서 타겟 색상을 업로드하고 처방 탐색을 시작해주세요.", icon=":material/info:")
