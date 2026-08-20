@@ -1,6 +1,7 @@
 streamlit
 numpy
-colour-science
-scipy
 pandas
+scipy
+colour-science
 openpyxl
+pyperclip
