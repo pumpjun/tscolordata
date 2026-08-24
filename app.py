@@ -505,22 +505,33 @@ with st.sidebar:
     if missing_dyes: st.warning(f"데이터 부족으로 제외된 염료 {len(missing_dyes)}개:\n{', '.join(missing_dyes)}", icon=":material/warning:")
     st.caption("클릭하여 선택 / 해제하세요.")
     
-    if st.button("Ohyoung Dye Finder에서 불러오기", use_container_width=True, type="primary"):
-        try:
-            pasted_text = pyperclip.paste()
-            if pasted_text:
-                current_dye_db = load_dye_data(st.session_state.dye_mode)
-                current_all_dyes, _, _, _, _ = load_dye_mapping(st.session_state.dye_mode, current_dye_db.keys())
-                copied_names = [x.strip() for x in pasted_text.split(',')]
-                for name in copied_names:
-                    if not name: continue
-                    for raw_name, display_name, _ in current_all_dyes:
-                        if name == raw_name or name == display_name:
-                            if raw_name not in st.session_state.selected_dyes:
-                                st.session_state.selected_dyes.append(raw_name)
-                            break
-            else: st.warning("클립보드에 복사된 텍스트가 없습니다.")
-        except Exception as e: st.error(f"클립보드에 접근할 수 없습니다: {e}")
+    st.markdown("<div style='font-size: 13px; font-weight: bold; margin-bottom: 5px; margin-top: 15px;'>Ohyoung Dye Finder에서 불러오기</div>", unsafe_allow_html=True)
+    
+    # 사용자가 텍스트를 직접 붙여넣을 수 있는 입력창 생성
+    pasted_text = st.text_input("복사한 텍스트를 붙여넣으세요 (Ctrl+V)", label_visibility="collapsed", placeholder="여기에 텍스트를 붙여넣으세요...")
+    
+    if st.button("불러오기 적용", use_container_width=True, type="primary"):
+        if pasted_text:
+            current_dye_db = load_dye_data(st.session_state.dye_mode)
+            current_all_dyes, _, _, _, _ = load_dye_mapping(st.session_state.dye_mode, current_dye_db.keys())
+            copied_names = [x.strip() for x in pasted_text.split(',')]
+            
+            added_count = 0
+            for name in copied_names:
+                if not name: continue
+                for raw_name, display_name, _ in current_all_dyes:
+                    if name == raw_name or name == display_name:
+                        if raw_name not in st.session_state.selected_dyes:
+                            st.session_state.selected_dyes.append(raw_name)
+                            added_count += 1
+                        break
+                        
+            if added_count > 0:
+                st.success(f"성공적으로 {added_count}개의 염료를 추가했습니다!")
+            else:
+                st.info("추가할 수 있는 새로운 염료가 없습니다 (이미 있거나 매칭 실패).")
+        else: 
+            st.warning("먼저 텍스트창에 복사한 내용을 붙여넣어 주세요.")
             
     st.markdown("---")
     dye_hex_dict = get_all_dye_hex_dict(st.session_state.dye_mode)
