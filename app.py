@@ -836,17 +836,11 @@ with col_results:
                 return des
 
             def objective_local(conc):
-                des = evaluate_lights_local(conc)
-                weight_obj = des[0] 
-                if len(des) > 1: weight_obj += 0.01 * des[1] 
-                if len(des) > 2: weight_obj += 0.01 * des[2]
-                
-                # 🌟 [수정] 패널티를 100배 약하게(0.001 -> 0.00001) 줄임!
-                # dE 매칭(0.00)을 찾아가는 여정은 절대 방해하지 않으면서,
-                # 마지막에 노란색 2개가 74:13으로 표류하는 것만 콕 찝어서 막아주는 마이크로 가중치
-                weight_obj += 0.00001 * np.sum((conc - approx_conc)**2)
-                
-                return weight_obj 
+                    des = evaluate_lights_local(conc)
+                    weight_obj = des[0] 
+                    if len(des) > 1: weight_obj += 0.01 * des[1] 
+                    if len(des) > 2: weight_obj += 0.01 * des[2]
+                    return weight_obj 
 
             max_bound = 150.0 if dye_mode == "Reactive (CPB)" else 15.0
             bnds = [(0.0, max_bound) for _ in range(len(combo))]
