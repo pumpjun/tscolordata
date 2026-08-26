@@ -842,12 +842,12 @@ with col_results:
                 if len(des) > 1: weight_obj += 0.01 * des[1] 
                 if len(des) > 2: weight_obj += 0.01 * des[2]
                 
-                # 🌟 [추가된 1급 비밀] L2 Regularization (쏠림 방지 패널티)
-                # 처방량의 제곱합(conc**2)에 미세한 패널티를 줌으로써, 
-                # 74:13 처럼 한쪽으로 무식하게 쏠리는 현상을 막고 34:26 처럼 밸런스 있게 분배하도록 강제함!
-                weight_obj += 0.005 * np.sum(conc**2)
+                # 🌟 [안전한 밸런스 패널티]
+                # 처방량을 무작정 깎는 게 아니라, 1차로 밸런스를 맞춰둔 근사치(approx_conc)에서 
+                # 엉뚱하게 혼자 폭주(74:13)하는 현상만 미세하게 브레이크를 걸어줌!
+                weight_obj += 0.001 * np.sum((conc - approx_conc)**2)
                 
-                return weight_obj 
+                return weight_obj
 
             max_bound = 150.0 if dye_mode == "Reactive (CPB)" else 15.0
             bnds = [(0.0, max_bound) for _ in range(len(combo))]
