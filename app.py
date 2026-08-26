@@ -835,11 +835,18 @@ with col_results:
                 if return_lab: return des, labs
                 return des
 
+            # (기존 코드의 처방 탐색 시작 로직 내부)
             def objective_local(conc):
                 des = evaluate_lights_local(conc)
                 weight_obj = des[0] 
                 if len(des) > 1: weight_obj += 0.01 * des[1] 
                 if len(des) > 2: weight_obj += 0.01 * des[2]
+                
+                # 🌟 [추가된 1급 비밀] L2 Regularization (쏠림 방지 패널티)
+                # 처방량의 제곱합(conc**2)에 미세한 패널티를 줌으로써, 
+                # 74:13 처럼 한쪽으로 무식하게 쏠리는 현상을 막고 34:26 처럼 밸런스 있게 분배하도록 강제함!
+                weight_obj += 0.005 * np.sum(conc**2)
+                
                 return weight_obj 
 
             max_bound = 150.0 if dye_mode == "Reactive (CPB)" else 15.0
