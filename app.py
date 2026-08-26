@@ -835,19 +835,12 @@ with col_results:
                 if return_lab: return des, labs
                 return des
 
-            # (기존 코드의 처방 탐색 시작 로직 내부)
             def objective_local(conc):
-                des = evaluate_lights_local(conc)
-                weight_obj = des[0] 
-                if len(des) > 1: weight_obj += 0.01 * des[1] 
-                if len(des) > 2: weight_obj += 0.01 * des[2]
-                
-                # 🌟 [안전한 밸런스 패널티]
-                # 처방량을 무작정 깎는 게 아니라, 1차로 밸런스를 맞춰둔 근사치(approx_conc)에서 
-                # 엉뚱하게 혼자 폭주(74:13)하는 현상만 미세하게 브레이크를 걸어줌!
-                weight_obj += 0.001 * np.sum((conc - approx_conc)**2)
-                
-                return weight_obj
+                    des = evaluate_lights_local(conc)
+                    weight_obj = des[0] 
+                    if len(des) > 1: weight_obj += 0.01 * des[1] 
+                    if len(des) > 2: weight_obj += 0.01 * des[2]
+                    return weight_obj 
 
             max_bound = 150.0 if dye_mode == "Reactive (CPB)" else 15.0
             bnds = [(0.0, max_bound) for _ in range(len(combo))]
