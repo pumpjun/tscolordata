@@ -540,7 +540,7 @@ with st.sidebar:
     def clear_search():
         st.session_state.search_query_input = ""
 
-    st.markdown("<div style='font-size: 13px; font-weight: bold; margin-bottom: 5px;'>🔍 염료 검색</div>", unsafe_allow_html=True)
+    st.markdown("<div style='font-size: 14px; font-weight: bold; margin-bottom: 5px; display: flex; align-items: center;'><span class='material-symbols-outlined' style='margin-right:6px; font-size:18px;'>search</span>염료 검색</div>", unsafe_allow_html=True)
     
     # 검색창과 초기화 버튼을 한 줄에 깔끔하게 배치
     col_search, col_clear = st.columns([7.5, 2.5], vertical_alignment="center")
@@ -589,6 +589,11 @@ with st.sidebar:
         [data-testid="stSidebar"] [data-testid="stHorizontalBlock"] div.stButton > button[kind="secondary"] {
             background-color: transparent !important; 
         }
+
+        /* 🌟 사이드바 기본 넓이 강제로 늘리기 (염료명과 버튼이 두 줄로 꺾이지 않도록 넉넉하게 확보) */
+    section[data-testid="stSidebar"] {
+        min-width: 390px !important; /* 여전히 좁다면 이 수치를 400px, 420px 등으로 늘려주세요 */
+    }
 
         /* 선택 안 된 버튼에 마우스를 올렸을 때만 옅은 회색 효과 */
         [data-testid="stSidebar"] [data-testid="stHorizontalBlock"] div.stButton > button[kind="secondary"]:hover {
