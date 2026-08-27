@@ -197,7 +197,7 @@ def map_light_name(brand_light_str):
     if "LED35" in s: return "LED35K"
     if "LED_B1" in s or "B1" in s: return "LED_B1"
     if "LED_T8G" in s or "T8G" in s: return "LED_T8G"
-    if "LED_31" in s or "T8G" in s: return "LED31"
+    if "LED_31" in s or "31" in s: return "LED31"
     return "없음"
 
 def on_brand_change():
@@ -350,7 +350,7 @@ LIGHT_MAP = {
     "LED35K": (custom_led35k_X, custom_led35k_Y, custom_led35k_Z),
     "LED_B1": (custom_led_b1_X, custom_led_b1_Y, custom_led_b1_Z), 
     "LED_T8G": (custom_led_t8g_X, custom_led_t8g_Y, custom_led_t8g_Z),
-    "LED-31": (custom_led31_X, custom_led31_Y, custom_led31_Z)
+    "LED_31": (custom_led31_X, custom_led31_Y, custom_led31_Z)
 }
 def get_ks(reflectance): return (1 - reflectance)**2 / (2 * reflectance)
 
