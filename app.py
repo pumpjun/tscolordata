@@ -197,6 +197,7 @@ def map_light_name(brand_light_str):
     if "LED35" in s: return "LED35K"
     if "LED_B1" in s or "B1" in s: return "LED_B1"
     if "LED_T8G" in s or "T8G" in s: return "LED_T8G"
+    if "LED_31" in s or "T8G" in s: return "LED31"
     return "없음"
 
 def on_brand_change():
@@ -326,12 +327,22 @@ custom_led_t8g_X = colour.SpectralDistribution(dict(zip(wls_astm, np.array(led_t
 custom_led_t8g_Y = colour.SpectralDistribution(dict(zip(wls_astm, np.array(led_t8g_y_vals) / 100.0)), name='LED_T8G_Y')
 custom_led_t8g_Z = colour.SpectralDistribution(dict(zip(wls_astm, np.array(led_t8g_z_vals) / 100.0)), name='LED_T8G_Z')
 
+# LED-31 (DC) 데이터 (10 Degree Observer, 10nm 간격)
+led31_x_vals = [-0.000, -0.000, -0.000, -0.000, -0.001, 0.005, 0.073, 0.342, 1.292, 2.802, 2.012, 0.811, 0.244, 0.043, 0.000, 0.180, 0.713, 1.624, 2.834, 4.340, 6.249, 8.426, 10.633, 12.748, 13.761, 13.197, 11.053, 8.044, 4.976, 2.738, 1.329, 0.583, 0.236, 0.091, 0.034, 0.012, 0.004, 0.002, 0.001, 0.000, 0.000, 0.000, 0.000]
+led31_y_vals = [-0.000, -0.000, -0.000, -0.000, -0.000, 0.000, 0.007, 0.035, 0.195, 0.671, 0.825, 0.796, 0.855, 1.240, 2.090, 3.354, 4.807, 6.140, 7.321, 8.199, 8.890, 9.200, 9.113, 8.843, 8.028, 6.724, 5.111, 3.502, 2.063, 1.093, 0.523, 0.228, 0.092, 0.035, 0.013, 0.005, 0.002, 0.001, 0.000, 0.000, 0.000, 0.000, 0.000]
+led31_z_vals = [-0.000, -0.000, -0.000, -0.000, -0.003, 0.022, 0.338, 1.658, 6.595, 15.067, 11.583, 5.529, 2.509, 1.492, 0.991, 0.619, 0.373, 0.207, 0.099, 0.029, -0.002, -0.001, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000]
+
+custom_led31_X = colour.SpectralDistribution(dict(zip(wls_astm, np.array(led31_x_vals) / 100.0)), name='LED31_X')
+custom_led31_Y = colour.SpectralDistribution(dict(zip(wls_astm, np.array(led31_y_vals) / 100.0)), name='LED31_Y')
+custom_led31_Z = colour.SpectralDistribution(dict(zip(wls_astm, np.array(led31_z_vals) / 100.0)), name='LED31_Z')
+
 LIGHT_MAP = {
     "D65": (custom_d65_X, custom_d65_Y, custom_d65_Z), "A": (custom_a_X, custom_a_Y, custom_a_Z),
     "CWF (F02)": (custom_f02_X, custom_f02_Y, custom_f02_Z), "TL84 (F11)": (custom_tl84_X, custom_tl84_Y, custom_tl84_Z),
     "TL83": (custom_tl83_X, custom_tl83_Y, custom_tl83_Z), "U3000 (F12)": (custom_u3000_X, custom_u3000_Y, custom_u3000_Z),
     "U3500": (custom_u35_X, custom_u35_Y, custom_u35_Z), "LED35K": (custom_led35k_X, custom_led35k_Y, custom_led35k_Z),
     "LED_B1": (custom_led_b1_X, custom_led_b1_Y, custom_led_b1_Z), "LED_T8G": (custom_led_t8g_X, custom_led_t8g_Y, custom_led_t8g_Z)
+    "LED-31": (custom_led31_X, custom_led31_Y, custom_led31_Z)
 }
 
 def get_ks(reflectance): return (1 - reflectance)**2 / (2 * reflectance)
