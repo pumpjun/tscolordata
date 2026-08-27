@@ -507,7 +507,7 @@ with st.sidebar:
     
     
     # 사용자가 텍스트를 직접 붙여넣을 수 있는 입력창 생성
-    pasted_text = st.text_input("복사한 텍스트를 붙여넣으세요 (Ctrl+V)", label_visibility="collapsed", placeholder="여기에 텍스트를 붙여넣으세요...")
+    pasted_text = st.text_input("복사한 텍스트를 붙여넣으세요 (Ctrl+V)", label_visibility="collapsed", placeholder="여기에 텍스트를 붙여넣으세요.")
     
     if st.button("Ohyoung Dye Finder에서 불러오기", use_container_width=True, type="primary"):
         if pasted_text:
