@@ -535,12 +535,43 @@ with st.sidebar:
             
     # ... (앞부분 동일) ...
     st.markdown("---")
+    
+    # 🌟 검색어 초기화 함수 🌟
+    def clear_search():
+        st.session_state.search_query_input = ""
+
+    st.markdown("<div style='font-size: 13px; font-weight: bold; margin-bottom: 5px;'>🔍 염료 검색</div>", unsafe_allow_html=True)
+    
+    # 검색창과 초기화 버튼을 한 줄에 깔끔하게 배치
+    col_search, col_clear = st.columns([7.5, 2.5], vertical_alignment="center")
+    
+    with col_search:
+        # 초보자도 알기 쉽게 placeholder에 "Enter ↵" 안내 추가
+        search_query = st.text_input(
+            "염료 검색", 
+            placeholder="검색어 입력 후 Enter ↵", 
+            label_visibility="collapsed", 
+            key="search_query_input"
+        )
+        
+    with col_clear:
+        # 직관적인 초기화 버튼 추가
+        st.button("초기화", use_container_width=True, on_click=clear_search)
+        
     dye_hex_dict = get_all_dye_hex_dict(st.session_state.dye_mode)
 
     filtered_dyes = []
     for raw_name, display_name, companies in all_dyes_ordered:
-        if selected_company is None or selected_company == "전체 보기" or selected_company in companies:
+        company_match = (selected_company is None or selected_company == "전체 보기" or selected_company in companies)
+        
+        search_match = True
+        if search_query:
+            search_match = (search_query.lower() in raw_name.lower()) or (search_query.lower() in display_name.lower())
+            
+        if company_match and search_match:
             filtered_dyes.append((raw_name, display_name))
+            
+    # ... (이하 CSS 및 버튼 렌더링 코드는 동일) ...
             
     # 🌟 추가된 CSS: 사이드바 버튼 UI 및 좌측 정렬, 투명 배경 처리 🌟
     st.markdown("""
