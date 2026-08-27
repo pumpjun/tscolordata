@@ -201,7 +201,9 @@ def map_light_name(brand_light_str):
     return "없음"
 
 def on_brand_change():
-    selected_brand = st.session_state.brand_selector
+    # .get()을 사용하여 변수가 없어도 에러가 발생하지 않고 기본값을 가져오도록 수정
+    selected_brand = st.session_state.get("brand_selector", "직접 선택 (Manual)")
+    
     if selected_brand != "직접 선택 (Manual)":
         brand_row = brand_df[brand_df['Brand'] == selected_brand].iloc[0]
         l1 = map_light_name(brand_row['Light1'])
@@ -211,6 +213,7 @@ def on_brand_change():
         st.session_state.l1 = l1
         st.session_state.l2 = l2
         st.session_state.l3 = l3
+
 
 def apply_dc_correction(light_name, de_val):
     if "TL84" in light_name:
