@@ -533,6 +533,7 @@ with st.sidebar:
         else: 
             st.warning("먼저 텍스트창에 복사한 내용을 붙여넣어 주세요.")
             
+    # ... (앞부분 동일) ...
     st.markdown("---")
     dye_hex_dict = get_all_dye_hex_dict(st.session_state.dye_mode)
 
@@ -541,12 +542,75 @@ with st.sidebar:
         if selected_company is None or selected_company == "전체 보기" or selected_company in companies:
             filtered_dyes.append((raw_name, display_name))
             
+    # 🌟 추가된 CSS: 사이드바 버튼 UI 및 좌측 정렬, 투명 배경 처리 🌟
+    st.markdown("""
+    <style>
+        /* stHorizontalBlock(컬럼) 내부의 버튼 기본 껍데기 공통 설정 */
+        [data-testid="stSidebar"] [data-testid="stHorizontalBlock"] div.stButton > button {
+            border: none !important;                
+            box-shadow: none !important;
+            padding-left: 8px !important;           
+            height: 35px !important;
+            min-height: 35px !important;
+        }
+        
+        /* 선택 안 된 염료(Secondary) 버튼만 배경을 투명하게 설정 */
+        [data-testid="stSidebar"] [data-testid="stHorizontalBlock"] div.stButton > button[kind="secondary"] {
+            background-color: transparent !important; 
+        }
+
+        /* 선택 안 된 버튼에 마우스를 올렸을 때만 옅은 회색 효과 */
+        [data-testid="stSidebar"] [data-testid="stHorizontalBlock"] div.stButton > button[kind="secondary"]:hover {
+            background-color: rgba(0,0,0,0.04) !important;
+        }
+
+        /* 버튼 안의 텍스트 영역을 100%로 잡고 좌측 정렬 강제 */
+        [data-testid="stSidebar"] [data-testid="stHorizontalBlock"] div.stButton > button div,
+        [data-testid="stSidebar"] [data-testid="stHorizontalBlock"] div.stButton > button p {
+            display: flex !important;
+            justify-content: flex-start !important;
+            text-align: left !important;
+            width: 100% !important;
+            margin: 0 !important;
+        }
+    </style>
+    """, unsafe_allow_html=True)
+
+    # 🌟 얇은 둥근 색상 칩과 정렬된 버튼 UI 🌟
     for idx, (raw_name, display_name) in enumerate(filtered_dyes):
         btn_type = "primary" if raw_name in st.session_state.selected_dyes else "secondary"
         hex_col = dye_hex_dict.get(raw_name, "#FFFFFF")
-        col_color, col_btn = st.columns([1.5, 8.5])
-        with col_color: st.markdown(f'<div style="background-color: {hex_col}; height: 35px; width: 100%; border-radius: 6px; border: 1px solid #ccc; margin-top: 4px; box-shadow: inset 0px 0px 4px rgba(0,0,0,0.1);"></div>', unsafe_allow_html=True)
-        with col_btn: st.button(display_name, key=f"dye_{raw_name}_{idx}", use_container_width=True, type=btn_type, on_click=toggle_dye, args=(raw_name,))
+        
+        col_color, col_btn = st.columns([0.7, 9.3], gap="small", vertical_alignment="center") 
+        
+        with col_color:
+            st.markdown(
+                f"""
+                <div style="
+                    background-color: {hex_col}; 
+                    height: 35px; 
+                    width: 8px;        
+                    border-radius: 4px; 
+                    margin-top: -8px;  
+                    float: right;      
+                "></div>
+                """, 
+                unsafe_allow_html=True
+            )
+        with col_btn:
+            st.button(
+                display_name, 
+                key=f"dye_{raw_name}_{idx}", 
+                use_container_width=True, 
+                type=btn_type, 
+                on_click=toggle_dye, 
+                args=(raw_name,)
+            )
+
+# ------------------------------------------
+# 메인 화면 (좌우 패널 구성)
+# ------------------------------------------
+# ... (이하 메인 화면 코드는 그대로 유지) ...
 
 # ------------------------------------------
 # 메인 화면 (좌우 패널 구성)
