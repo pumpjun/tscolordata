@@ -586,7 +586,7 @@ with st.sidebar:
             border: none !important; box-shadow: none !important; padding-left: 8px !important; height: 35px !important; min-height: 35px !important;
         }
         [data-testid="stSidebar"] [data-testid="stHorizontalBlock"] div.stButton > button[kind="secondary"] { background-color: transparent !important; }
-        section[data-testid="stSidebar"] { min-width: 390px !important; }
+        section[data-testid="stSidebar"] { min-width: 330px !important; }
         [data-testid="stSidebar"] [data-testid="stHorizontalBlock"] div.stButton > button[kind="secondary"]:hover { background-color: rgba(0,0,0,0.04) !important; }
         [data-testid="stSidebar"] [data-testid="stHorizontalBlock"] div.stButton > button div,
         [data-testid="stSidebar"] [data-testid="stHorizontalBlock"] div.stButton > button p {
