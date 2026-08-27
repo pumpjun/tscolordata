@@ -337,14 +337,18 @@ custom_led31_Y = colour.SpectralDistribution(dict(zip(wls_astm, np.array(led31_y
 custom_led31_Z = colour.SpectralDistribution(dict(zip(wls_astm, np.array(led31_z_vals) / 100.0)), name='LED31_Z')
 
 LIGHT_MAP = {
-    "D65": (custom_d65_X, custom_d65_Y, custom_d65_Z), "A": (custom_a_X, custom_a_Y, custom_a_Z),
-    "CWF (F02)": (custom_f02_X, custom_f02_Y, custom_f02_Z), "TL84 (F11)": (custom_tl84_X, custom_tl84_Y, custom_tl84_Z),
-    "TL83": (custom_tl83_X, custom_tl83_Y, custom_tl83_Z), "U3000 (F12)": (custom_u3000_X, custom_u3000_Y, custom_u3000_Z),
-    "U3500": (custom_u35_X, custom_u35_Y, custom_u35_Z), "LED35K": (custom_led35k_X, custom_led35k_Y, custom_led35k_Z),
-    "LED_B1": (custom_led_b1_X, custom_led_b1_Y, custom_led_b1_Z), "LED_T8G": (custom_led_t8g_X, custom_led_t8g_Y, custom_led_t8g_Z)
+    "D65": (custom_d65_X, custom_d65_Y, custom_d65_Z), 
+    "A": (custom_a_X, custom_a_Y, custom_a_Z),
+    "CWF (F02)": (custom_f02_X, custom_f02_Y, custom_f02_Z), 
+    "TL84 (F11)": (custom_tl84_X, custom_tl84_Y, custom_tl84_Z),
+    "TL83": (custom_tl83_X, custom_tl83_Y, custom_tl83_Z), 
+    "U3000 (F12)": (custom_u3000_X, custom_u3000_Y, custom_u3000_Z),
+    "U3500": (custom_u35_X, custom_u35_Y, custom_u35_Z), 
+    "LED35K": (custom_led35k_X, custom_led35k_Y, custom_led35k_Z),
+    "LED_B1": (custom_led_b1_X, custom_led_b1_Y, custom_led_b1_Z), 
+    "LED_T8G": (custom_led_t8g_X, custom_led_t8g_Y, custom_led_t8g_Z),
     "LED-31": (custom_led31_X, custom_led31_Y, custom_led31_Z)
 }
-
 def get_ks(reflectance): return (1 - reflectance)**2 / (2 * reflectance)
 
 def get_ks_normalized(spectrum_map):
