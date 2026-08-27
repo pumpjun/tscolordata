@@ -505,12 +505,11 @@ with st.sidebar:
     if missing_dyes: st.warning(f"데이터 부족으로 제외된 염료 {len(missing_dyes)}개:\n{', '.join(missing_dyes)}", icon=":material/warning:")
     st.caption("클릭하여 선택 / 해제하세요.")
     
-    st.markdown("<div style='font-size: 13px; font-weight: bold; margin-bottom: 5px; margin-top: 15px;'>Ohyoung Dye Finder에서 불러오기</div>", unsafe_allow_html=True)
     
     # 사용자가 텍스트를 직접 붙여넣을 수 있는 입력창 생성
     pasted_text = st.text_input("복사한 텍스트를 붙여넣으세요 (Ctrl+V)", label_visibility="collapsed", placeholder="여기에 텍스트를 붙여넣으세요...")
     
-    if st.button("불러오기 적용", use_container_width=True, type="primary"):
+    if st.button("Ohyoung Dye Finder에서 불러오기", use_container_width=True, type="primary"):
         if pasted_text:
             current_dye_db = load_dye_data(st.session_state.dye_mode)
             current_all_dyes, _, _, _, _ = load_dye_mapping(st.session_state.dye_mode, current_dye_db.keys())
