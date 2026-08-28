@@ -596,7 +596,6 @@ with st.sidebar:
         }
         [data-testid="stSidebar"] [data-testid="stHorizontalBlock"] div.stButton > button[kind="secondary"] { background-color: transparent !important; }
         
-        /* 사이드바 크기 고정 부분 */
         section[data-testid="stSidebar"] { 
             min-width: 330px !important; 
             max-width: 330px !important; 
