@@ -586,14 +586,17 @@ with st.sidebar:
             border: none !important; box-shadow: none !important; padding-left: 8px !important; height: 35px !important; min-height: 35px !important;
         }
         [data-testid="stSidebar"] [data-testid="stHorizontalBlock"] div.stButton > button[kind="secondary"] { background-color: transparent !important; }
-        st.markdown("""
+        # ------------------------------------------
+    # 사이드바 CSS 스타일 적용 부분 (따옴표 확인)
+    # ------------------------------------------
+    st.markdown("""
     <style>
         [data-testid="stSidebar"] [data-testid="stHorizontalBlock"] div.stButton > button {
             border: none !important; box-shadow: none !important; padding-left: 8px !important; height: 35px !important; min-height: 35px !important;
         }
         [data-testid="stSidebar"] [data-testid="stHorizontalBlock"] div.stButton > button[kind="secondary"] { background-color: transparent !important; }
         
-        /* 사이드바 크기 고정 부분 수정 */
+        /* 사이드바 크기 고정 부분 */
         section[data-testid="stSidebar"] { 
             min-width: 330px !important; 
             max-width: 330px !important; 
