@@ -586,15 +586,6 @@ with st.sidebar:
             border: none !important; box-shadow: none !important; padding-left: 8px !important; height: 35px !important; min-height: 35px !important;
         }
         [data-testid="stSidebar"] [data-testid="stHorizontalBlock"] div.stButton > button[kind="secondary"] { background-color: transparent !important; }
-        # ------------------------------------------
-    # 사이드바 CSS 스타일 적용 부분 (따옴표 확인)
-    # ------------------------------------------
-    st.markdown("""
-    <style>
-        [data-testid="stSidebar"] [data-testid="stHorizontalBlock"] div.stButton > button {
-            border: none !important; box-shadow: none !important; padding-left: 8px !important; height: 35px !important; min-height: 35px !important;
-        }
-        [data-testid="stSidebar"] [data-testid="stHorizontalBlock"] div.stButton > button[kind="secondary"] { background-color: transparent !important; }
         
         section[data-testid="stSidebar"] { 
             min-width: 330px !important; 
@@ -602,13 +593,6 @@ with st.sidebar:
             width: 330px !important; 
         }
         
-        [data-testid="stSidebar"] [data-testid="stHorizontalBlock"] div.stButton > button[kind="secondary"]:hover { background-color: rgba(0,0,0,0.04) !important; }
-        [data-testid="stSidebar"] [data-testid="stHorizontalBlock"] div.stButton > button div,
-        [data-testid="stSidebar"] [data-testid="stHorizontalBlock"] div.stButton > button p {
-            display: flex !important; justify-content: flex-start !important; text-align: left !important; width: 100% !important; margin: 0 !important;
-        }
-    </style>
-    """, unsafe_allow_html=True)
         [data-testid="stSidebar"] [data-testid="stHorizontalBlock"] div.stButton > button[kind="secondary"]:hover { background-color: rgba(0,0,0,0.04) !important; }
         [data-testid="stSidebar"] [data-testid="stHorizontalBlock"] div.stButton > button div,
         [data-testid="stSidebar"] [data-testid="stHorizontalBlock"] div.stButton > button p {
