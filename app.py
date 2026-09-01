@@ -76,7 +76,7 @@ def set_lang(lang_code):
 # ==========================================
 # 0. 페이지 기본 설정
 # ==========================================
-st.set_page_config(layout="wide", initial_sidebar_state="expanded", page_title="T/S Colordata", page_icon="logo.png")
+st.set_page_config(layout="wide", initial_sidebar_state="expanded", page_title="Spectra50", page_icon="logo.png")
 
 # ==========================================
 # 1. 세션 상태 초기화
@@ -166,7 +166,7 @@ st.markdown(f"""
 </style>
 <div class="fixed-header">
     <img src="data:image/png;base64,{logo_base64}" onerror="this.style.display='none'">
-    <h2>T/S Colordata <span style="font-size: 16px; color: #666;">({header_mode_text})</span></h2>
+    <h2>Spectra50 <span style="font-size: 16px; color: #666;">({header_mode_text})</span></h2>
 </div>
 """, unsafe_allow_html=True)
 
