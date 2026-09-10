@@ -569,9 +569,10 @@ with st.sidebar:
     
     pasted_text = st.text_input(t("paste_ph"), label_visibility="collapsed", placeholder=t("paste_ph"))
     if st.button(t("load_ohyoung"), use_container_width=True, type="primary"):
-    if pasted_text:
-        current_dye_db = load_dye_data(st.session_state.dye_mode, st.session_state.disperse_sub)
-        current_all_dyes, _, _, _, _ = load_dye_mapping(st.session_state.dye_mode, st.session_state.disperse_sub, current_dye_db.keys())
+        if pasted_text:
+            current_dye_db = load_dye_data(st.session_state.dye_mode, st.session_state.disperse_sub)
+            current_all_dyes, _, _, _, _ = load_dye_mapping(st.session_state.dye_mode, st.session_state.disperse_sub, current_dye_db.keys())
+            
             copied_names = [x.strip() for x in pasted_text.split(',')]
             added_count = 0
             for name in copied_names:
@@ -582,9 +583,12 @@ with st.sidebar:
                             st.session_state.selected_dyes.append(raw_name)
                             added_count += 1
                         break
-            if added_count > 0: st.success(t("success_add", count=added_count))
-            else: st.info(t("fail_add"))
-        else: st.warning(t("warn_paste"))
+            if added_count > 0: 
+                st.success(t("success_add", count=added_count))
+            else: 
+                st.info(t("fail_add"))
+        else: 
+            st.warning(t("warn_paste"))
             
     st.markdown("---")
     def clear_search(): st.session_state.search_query_input = ""
