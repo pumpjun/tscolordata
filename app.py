@@ -82,7 +82,7 @@ st.set_page_config(layout="wide", initial_sidebar_state="expanded", page_title="
 # 1. 세션 상태 초기화
 # ==========================================
 if "dye_mode" not in st.session_state: st.session_state.dye_mode = "Reactive"
-if "disperse_sub" not in st.session_state: st.session_state.disperse_sub = "Jersey"
+if "disperse_sub" not in st.session_state: st.session_state.disperse_sub = "Interlock"
 if "selected_dyes" not in st.session_state: st.session_state.selected_dyes = []
 if "top_results" not in st.session_state: st.session_state.top_results = None
 if "qtx_filename" not in st.session_state: st.session_state.qtx_filename = ""
@@ -225,9 +225,15 @@ def apply_dc_correction(light_name, de_val):
 # 4. 데이터 및 염료 매핑 로드
 # ==========================================
 @st.cache_data
-def load_dye_data(mode):
+def load_dye_data(mode, sub_mode="Interlock"):
     file_map = {"Reactive": 'dye_data.json', "Disperse": 'dye_data_disperse.json', "Reactive (CPB)": 'dye_data_cpb.json', "CDP": 'dye_data_CDP.json', "Acid": 'dye_data_acid.json'}
-    file_name = file_map.get(mode, 'dye_data.json')
+    
+    # Woven 선택 시 전용 json 파일 연결
+    if mode == "Disperse" and sub_mode == "Woven":
+        file_name = 'dye_data_woven.json'
+    else:
+        file_name = file_map.get(mode, 'dye_data.json')
+        
     try:
         with open(file_name, 'r', encoding='utf-8') as f:
             raw_data = json.load(f)
@@ -235,7 +241,7 @@ def load_dye_data(mode):
     except FileNotFoundError: return {}
 
 @st.cache_data
-def load_dye_mapping(mode, _valid_keys):
+def load_dye_mapping(mode, sub_mode, _valid_keys):
     file_map = {"Reactive": 'dye_list.xlsx', "Disperse": 'dis_dye_list.xlsx', "Reactive (CPB)": 'cpb_dye_list.xlsx', "CDP": 'CDP_dye_list.xlsx', "Acid": 'acid_dye_list.xlsx'}
     file_name = file_map.get(mode, 'dye_list.xlsx')
     try:
@@ -244,9 +250,26 @@ def load_dye_mapping(mode, _valid_keys):
         for _, row in df.iterrows():
             try: sort_val = float(row[0]) if pd.notna(row[0]) else 999.0
             except: sort_val = 999.0
-            raw_name, display_name = str(row[1]).strip(), str(row[2]).strip()
-            companies = [str(row[i]).strip() for i in range(3, len(row)) if pd.notna(row[i]) and str(row[i]).strip()]
+            
+            # Disperse 모드일 경우 엑셀 구조 (B열: Interlock, C열: Woven, D열: 표시명, E열~: 업체)
+            if mode == "Disperse":
+                interlock_name = str(row[1]).strip() if pd.notna(row[1]) else ""
+                woven_name = str(row[2]).strip() if pd.notna(row[2]) else ""
+                display_name = str(row[3]).strip() if pd.notna(row[3]) else ""
+                raw_name = woven_name if sub_mode == "Woven" else interlock_name
+                company_start = 4
+            else:
+                raw_name = str(row[1]).strip() if pd.notna(row[1]) else ""
+                display_name = str(row[2]).strip() if pd.notna(row[2]) else ""
+                company_start = 3
+            
+            # 데이터가 비어있으면 건너뜀
+            if not raw_name or raw_name.lower() == 'nan':
+                continue
+                
+            companies = [str(row[i]).strip() for i in range(company_start, len(row)) if pd.notna(row[i]) and str(row[i]).strip()]
             all_companies.update(companies)
+            
             if raw_name in _valid_keys:
                 mapping_list.append((raw_name, display_name, companies))
                 disp_dict[raw_name] = display_name
@@ -255,8 +278,8 @@ def load_dye_mapping(mode, _valid_keys):
         return mapping_list, disp_dict, missing_dyes, sorted(list(all_companies)), sort_order_dict
     except Exception: return [(k, k, []) for k in sorted(list(_valid_keys))], {k: k for k in _valid_keys}, [], [], {}
 
-dye_db = load_dye_data(dye_mode)
-all_dyes_ordered, display_name_dict, missing_dyes, all_companies, sort_order_dict = load_dye_mapping(dye_mode, dye_db.keys())
+dye_db = load_dye_data(dye_mode, st.session_state.disperse_sub)
+all_dyes_ordered, display_name_dict, missing_dyes, all_companies, sort_order_dict = load_dye_mapping(dye_mode, st.session_state.disperse_sub, dye_db.keys())
 
 # --- 스펙트럼/광원 데이터 (변경 없음) ---
 wls_astm = np.arange(360, 790, 10)
@@ -406,10 +429,10 @@ def get_preview_hex(target_r_array, light_name):
     return hex_col, [int(RGB_viz[0]*255), int(RGB_viz[1]*255), int(RGB_viz[2]*255)]
 
 @st.cache_data
-def get_all_dye_hex_dict(dye_mode):
+def get_all_dye_hex_dict(dye_mode, sub_mode="Interlock"):
     hex_dict = {}
     try:
-        dye_data = load_dye_data(dye_mode)
+        dye_data = load_dye_data(dye_mode, sub_mode)
         for dye_name, conc_data in dye_data.items():
             available_concs = sorted([float(k) for k in conc_data.keys() if float(k) > 0])
             if not available_concs:
@@ -501,7 +524,8 @@ def disperse_dialog():
     st.markdown(t("desc_disp"))
     if "temp_disp" not in st.session_state: st.session_state.temp_disp = st.session_state.disperse_sub
     col1, col2 = st.columns(2)
-    with col1: st.button("Jersey", use_container_width=True, type="primary" if st.session_state.temp_disp == "Jersey" else "secondary", on_click=set_temp_disp, args=("Jersey",), key="btn_dlg_jersey")
+    # Jersey -> Interlock 변경
+    with col1: st.button("Interlock", use_container_width=True, type="primary" if st.session_state.temp_disp == "Interlock" else "secondary", on_click=set_temp_disp, args=("Interlock",), key="btn_dlg_interlock")
     with col2: st.button("Woven", use_container_width=True, type="primary" if st.session_state.temp_disp == "Woven" else "secondary", on_click=set_temp_disp, args=("Woven",), key="btn_dlg_woven")
     st.markdown("<div style='margin-top: 10px;'></div>", unsafe_allow_html=True)
     if st.button(t("confirm"), use_container_width=True, type="primary", on_click=confirm_disp_action, key="btn_dlg_confirm"): st.rerun()
@@ -545,9 +569,9 @@ with st.sidebar:
     
     pasted_text = st.text_input(t("paste_ph"), label_visibility="collapsed", placeholder=t("paste_ph"))
     if st.button(t("load_ohyoung"), use_container_width=True, type="primary"):
-        if pasted_text:
-            current_dye_db = load_dye_data(st.session_state.dye_mode)
-            current_all_dyes, _, _, _, _ = load_dye_mapping(st.session_state.dye_mode, current_dye_db.keys())
+    if pasted_text:
+        current_dye_db = load_dye_data(st.session_state.dye_mode, st.session_state.disperse_sub)
+        current_all_dyes, _, _, _, _ = load_dye_mapping(st.session_state.dye_mode, st.session_state.disperse_sub, current_dye_db.keys())
             copied_names = [x.strip() for x in pasted_text.split(',')]
             added_count = 0
             for name in copied_names:
@@ -572,7 +596,7 @@ with st.sidebar:
     with col_clear:
         st.button(t("reset"), use_container_width=True, on_click=clear_search)
         
-    dye_hex_dict = get_all_dye_hex_dict(st.session_state.dye_mode)
+    dye_hex_dict = get_all_dye_hex_dict(st.session_state.dye_mode, st.session_state.disperse_sub)
     filtered_dyes = []
     for raw_name, display_name, companies in all_dyes_ordered:
         company_match = (selected_company is None or selected_company == t("company_all") or selected_company in companies)
