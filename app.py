@@ -10,6 +10,7 @@ import base64
 import os
 import re
 import pyperclip
+import plotly.graph_objects as go
 
 # ==========================================
 # 0. 다국어 지원 (번역 딕셔너리 및 함수)
@@ -58,7 +59,67 @@ LANG_DICT = {
     "warn_paste": {"ko": "먼저 텍스트창에 복사한 내용을 붙여넣어 주세요.", "en": "Please paste text in the input box first."},
     "target_found": {"ko": "인식된 타겟: **{name}**", "en": "Recognized Target: **{name}**"},
     "qtx_error": {"ko": "QTX 파일에서 데이터를 찾을 수 없습니다.", "en": "No data found in the QTX file."},
-    "qtx_parse_error": {"ko": "QTX 분석 오류: {e}", "en": "QTX Parse Error: {e}"}
+    "qtx_parse_error": {"ko": "QTX 분석 오류: {e}", "en": "QTX Parse Error: {e}"},
+    "popup_title": {"ko": "처방 상세 분석 (상용성 & 견뢰도)", "en": "Recipe Detailed Analysis..."},
+    "comp_sim": {"ko": "상용성 시뮬레이션", "en": "Compatibility Simulation"},
+    "comp_x_disp": {"ko": "온도 / 유지 시간", "en": "Temp / Hold Time"},
+    "comp_x_reac": {"ko": "공정 시간 (분)", "en": "Process Time (min)"},
+    "comp_y": {"ko": "염착률 (%)", "en": "Exhaustion (%)"},
+    "no_comp_data": {"ko": "선택된 염료의 상용성 실험 데이터가 없습니다.", "en": "No compatibility test data for the selected dyes."},
+    "lab_dip_guide": {"ko": "상용성 기반 Lab dip 예측 (가이드)", "en": "Lab Dip Prediction based on Compatibility (Guide)"},
+    "lab_dip_desc": {"ko": "※ 염료 간 흡착 속도 차이(경쟁 흡착)로 인한 수율 저하를 계산합니다.<br>전체 평균이 아닌, <strong>가장 격차가 심하게 벌어지는 시점(초/중반부 최대 Gap)</strong>을 추적하여 보정치를 산출합니다.", "en": "※ Calculates yield reduction due to differences in adsorption speed.<br>It tracks the <strong>maximum gap at the early/mid stages</strong> rather than the overall average to calculate the adjustment."},
+    "max_delay": {"ko": "최대 -{gap:.1f}% 지연", "en": "Max -{gap:.1f}% Delay"},
+    "baseline_fast": {"ko": "기준 (가장 빠름)", "en": "Baseline (Fastest)"},
+    "no_data": {"ko": "데이터 없음", "en": "No Data"},
+    "dye_name": {"ko": "염료명", "en": "Dye Name"},
+    "calc_recipe": {"ko": "산출 처방 (원본)", "en": "Calculated Recipe (Original)"},
+    "pred_recipe": {"ko": "예상 보정 처방 (가이드)", "en": "Predicted Recipe (Guide)"},
+    "adj_needed": {"ko": "증감 필요량", "en": "Adjustment Needed"},
+    "comp_diff": {"ko": "상용성 차이 (Max Gap)", "en": "Compatibility Diff (Max Gap)"},
+    "no_comp_pred": {"ko": "예측값을 계산하기 위한 상용성 데이터가 충분하지 않습니다.", "en": "Not enough compatibility data to calculate predictions."},
+    "fastness_detail": {"ko": "상세 견뢰도 분석", "en": "Detailed Fastness Analysis"},
+    "indiv_fastness": {"ko": "**1. 개별 염료 견뢰도 (DB 원본)**", "en": "**1. Individual Dye Fastness (DB Original)**"},
+    "mix_fastness": {"ko": "**2. MIX 예상 견뢰도 (처방 농도 반영)**", "en": "**2. MIX Predicted Fastness (Recipe Conc. Applied)**"},
+    "mix_fastness_desc": {"ko": "※ 가장 취약한 염료 등급 기준이며, 기준 농도 대비 처방 농도에 따른 보정(보너스/패널티)이 자동 반영된 결과입니다. (최대 4.5급)", "en": "※ Based on the weakest dye grade, with bonuses/penalties applied based on recipe concentration. (Max 4.5)"},
+    "add_to_list": {"ko": "리스트에 처방 추가하기", "en": "Add Recipe to List"},
+    "select_rank": {"ko": "추가/분석할 순위 선택", "en": "Select Rank to Add/Analyze"},
+    "view_comp_fast": {"ko": "상용성 및 견뢰도 보기", "en": "View Compatibility & Fastness"},
+    "color_name_input": {"ko": "Color Name (색상명):", "en": "Color Name:"},
+    "recipe_detail_set": {"ko": "처방 농도 세부 설정", "en": "Recipe Concentration Settings"},
+    "apply_blend": {"ko": "혼방 비율 (CVC / T/C) 적용하기", "en": "Apply Blend Ratio (CVC / T/C)"},
+    "cotton_ratio": {"ko": "Cotton (면) 비율 (%)", "en": "Cotton Ratio (%)"},
+    "poly_ratio": {"ko": "Poly (폴리) 비율 (%)", "en": "Poly Ratio (%)"},
+    "applied_ratio": {"ko": "적용 비율: **{ratio}%**", "en": "Applied Ratio: **{ratio}%**"},
+    "apply_pdps": {"ko": "PDPS 적용 (처방 농도의 75%만 산출)", "en": "Apply PDPS (Yields 75% of recipe)"},
+    "pdps_applied": {"ko": "PDPS 적용: **75%** 산출", "en": "PDPS Applied: **75%** yield"},
+    "add_current_recipe": {"ko": "현재 처방을 리스트에 추가", "en": "Add Current Recipe to List"},
+    "cart_status": {"ko": "현재 장바구니 현황 (총 {count}개)", "en": "Current Cart Status (Total {count})"},
+    "cart_color_name": {"ko": "색상명 (Color Name)", "en": "Color Name"},
+    "cart_dye_mode": {"ko": "포함된 염료 모드", "en": "Included Dye Modes"},
+    "empty_cart": {"ko": "장바구니 비우기", "en": "Empty Cart"},
+    "create_excel": {"ko": "엑셀 리포트 생성", "en": "Create Excel Report"},
+    "base_template": {"ko": "기준 템플릿: ", "en": "Base Template: "},
+    "generate_excel_btn": {"ko": "엑셀 파일 생성하기", "en": "Generate Excel File"},
+    "generating_excel": {"ko": "엑셀 파일을 생성하는 중입니다...", "en": "Generating Excel file..."},
+    "excel_ready": {"ko": "엑셀 파일이 준비되었습니다! 아래 버튼을 눌러 다운로드하세요.", "en": "Excel file is ready! Click the button below to download."},
+    "excel_error": {"ko": "엑셀 생성 중 문제가 발생했습니다:\n\n{e}", "en": "An error occurred while creating Excel:\n\n{e}"},
+    "download_excel": {"ko": "완성된 엑셀 파일 다운로드", "en": "Download Completed Excel File"},
+    "cart_empty_info": {"ko": "장바구니가 비어 있습니다. [처방 탐색 결과] 탭에서 원하는 처방을 리스트에 추가해주세요.", "en": "Cart is empty. Please add a recipe from the [Search Results] tab."},
+    "tab_search": {"ko": "처방 탐색 결과", "en": "Recipe Search Results"},
+    "tab_cart": {"ko": "장바구니 및 엑셀 출력", "en": "Cart & Excel Export"},
+    "err_cpb_only": {"ko": "장바구니가 'CPB' 모드입니다. 다른 염료를 추가할 수 없습니다.", "en": "Cart is in 'CPB' mode. Cannot add other dyes."},
+    "err_cdp_only": {"ko": "장바구니가 'CDP' 모드입니다. 다른 모드의 염료를 추가할 수 없습니다.", "en": "Cart is in 'CDP' mode. Cannot add other dye modes."},
+    "err_acid_only": {"ko": "장바구니가 'Acid' 모드입니다. 다른 모드의 염료를 추가할 수 없습니다.", "en": "Cart is in 'Acid' mode. Cannot add other dye modes."},
+    "err_has_others_cpb": {"ko": "장바구니에 다른 염료가 있습니다. CPB 처방을 추가할 수 없습니다.", "en": "Cart contains other dyes. Cannot add CPB recipe."},
+    "err_has_others_cdp": {"ko": "장바구니에 다른 염료가 있습니다. CDP 처방을 추가할 수 없습니다.", "en": "Cart contains other dyes. Cannot add CDP recipe."},
+    "err_has_others_acid": {"ko": "장바구니에 다른 염료가 있습니다. Acid 처방을 추가할 수 없습니다.", "en": "Cart contains other dyes. Cannot add Acid recipe."},
+    "err_cvc_need_d": {"ko": "혼합(CVC)을 원하시면 첫 번째 색상에 분산(D) 염료를 먼저 추가해주세요.", "en": "For CVC blend, please add Disperse (D) dyes to the first color."},
+    "err_cvc_need_r": {"ko": "혼합(CVC)을 원하시면 첫 번째 색상에 반응성(R) 염료를 먼저 추가해주세요.", "en": "For CVC blend, please add Reactive (R) dyes to the first color."},
+    "success_added_cart": {"ko": "'{name}' 처방 리스트 추가 완료! (총 {count}개)", "en": "Recipe '{name}' added to list! (Total {count})"},
+    "success_added_cart_ratio": {"ko": "농도 비율({ratio}%) 적용하여 '{name}' 처방 추가 완료! (총 {count}개)", "en": "Recipe '{name}' added with ratio ({ratio}%)! (Total {count})"},
+    "prog_init": {"ko": "총 {count}개 조합에 대해 사전 탐색을 진행합니다...", "en": "Starting initial search for {count} combinations..."},
+    "prog_fast": {"ko": "총 {total}개 조합 고속 필터링 중... ({curr}/{total})", "en": "Fast filtering {total} combinations... ({curr}/{total})"},
+    "prog_precise": {"ko": "최적의 {total}개 정밀 검색 중: {names} ({curr}/{total})", "en": "Precise searching top {total} recipes: {names} ({curr}/{total})"}
 }
 
 if "lang" not in st.session_state:
@@ -450,30 +511,205 @@ def get_all_dye_hex_dict(dye_mode, sub_mode="Interlock"):
     except Exception: pass
     return hex_dict
 
+import os
+import pandas as pd
+import streamlit as st
+
+# ==========================================
+# 1. 통합 견뢰도 데이터 로드
+# ==========================================
 @st.cache_data
 def load_fastness_db():
     try:
-        file_path = "color_fastness.xlsx"
-        df = pd.read_excel(file_path)
-        return df
-    except Exception: return None
+        # 파일 경로 유연하게 탐색 (data 폴더 확인 후, 없으면 현재 폴더 확인)
+        file_path = "data/integrated_dyes_data.xlsx"
+        if not os.path.exists(file_path):
+            file_path = "integrated_dyes_data.xlsx"
+            
+        # 그래도 없으면 화면에 에러 표시
+        if not os.path.exists(file_path):
+            st.error(f"⚠️ 견뢰도 파일({file_path})을 찾을 수 없습니다. 경로를 확인해주세요.")
+            return None
+            
+        xls = pd.ExcelFile(file_path)
+        all_dfs = []
+        
+        for sheet in xls.sheet_names:
+            if sheet in ['그래프', 'SREF', 'H-E SREF']: continue
+            df_raw = pd.read_excel(xls, sheet_name=sheet, header=None).dropna(how='all')
+            if df_raw.empty: continue
+                
+            header_idx = None
+            is_two_row = False
+            
+            for idx in range(min(5, len(df_raw))):
+                row_vals = [str(x).strip() for x in df_raw.iloc[idx].values if pd.notna(x)]
+                if '염료명' in row_vals:
+                    # 바로 위 행에 병합된 큰 제목(일광, 세탁 등)이 있는지 확인하여 2단 헤더 감지
+                    if idx > 0 and pd.notna(df_raw.iloc[idx-1, 2]):
+                        header_idx = idx - 1
+                        is_two_row = True
+                    else:
+                        header_idx = idx
+                        is_two_row = False
+                    break
+            
+            if header_idx is None: continue
+            
+            if is_two_row:
+                h1 = df_raw.iloc[header_idx].ffill()
+                h2 = df_raw.iloc[header_idx+1].fillna('')
+                new_cols = []
+                for a, b in zip(h1, h2):
+                    if pd.isna(a) or str(a).strip() == '':
+                        new_cols.append(str(b).strip())
+                    elif str(b).strip() == '':
+                        new_cols.append(str(a).strip())
+                    else:
+                        new_cols.append(f"{str(a).strip()}::{str(b).strip()}")
+                df = df_raw.iloc[header_idx+2:].copy()
+                df.columns = new_cols
+            else:
+                df = df_raw.iloc[header_idx+1:].copy()
+                df.columns = [str(x).strip() if pd.notna(x) else f"Unnamed_{i}" for i, x in enumerate(df_raw.iloc[header_idx].values)]
+                
+            all_dfs.append(df)
+            
+        if all_dfs:
+            return pd.concat(all_dfs, ignore_index=True)
+        return None
+    except Exception as e:
+        st.error(f"⚠️ 견뢰도 파일 로드 중 오류 발생: {str(e)}")
+        return None
+
+# ==========================================
+# 2. 상용성 데이터 로드
+# ==========================================
+@st.cache_data
+def load_compatibility_data():
+    try:
+        file_path = "data/integrated_dyes_data.xlsx"
+        if not os.path.exists(file_path): 
+            file_path = "integrated_dyes_data.xlsx"
+            
+        if not os.path.exists(file_path): 
+            st.error(f"⚠️ 상용성 파일({file_path})을 찾을 수 없습니다.")
+            return {}
+        
+        xls = pd.ExcelFile(file_path)
+        comp_dict = {}
+        target_sheets = [s for s in xls.sheet_names if s not in ['그래프', 'SREF', 'H-E SREF']]
+        
+        for sheet in target_sheets:
+            df = pd.read_excel(xls, sheet_name=sheet, header=None).dropna(how='all')
+            header_idx = None
+            is_disperse = False
+            
+            for idx, row in df.iterrows():
+                row_vals = [str(x).strip().split('.')[0] for x in row.values if pd.notna(x)]
+                if '0' in row_vals and '5' in row_vals and '20' in row_vals:
+                    header_idx = idx
+                    is_disperse = False
+                    break
+                elif '0' in row_vals and '70' in row_vals and '80' in row_vals:
+                    header_idx = idx
+                    is_disperse = True
+                    break
+                    
+            if header_idx is None: continue
+            
+            header_row = df.iloc[header_idx]
+            
+            if not is_disperse:
+                target_cols = ['0', '5', '20', '25', '40', '80', '100']
+                time_mapping = {}
+                for c_idx, val in enumerate(header_row):
+                    v_str = str(val).strip().split('.')[0]
+                    if v_str in target_cols:
+                        time_mapping[int(v_str)] = c_idx
+                
+                sorted_times = sorted(time_mapping.keys())
+                for idx in range(header_idx + 1, len(df)):
+                    dye_name = str(df.iloc[idx, 1]).strip()
+                    if not dye_name or dye_name in ['None', 'Dyes', '염료', 'No.']: continue
+                    try:
+                        y_vals = [float(df.iloc[idx, time_mapping[t]]) for t in sorted_times]
+                        comp_dict[dye_name] = {"type": "reactive", "times": sorted_times, "values": y_vals}
+                    except: continue
+            else:
+                target_cols_disp = ['0', '70', '80', '90', '100', '110', '120', '130', '130x10', '130x30', '130x50']
+                time_mapping = {}
+                for c_idx, val in enumerate(header_row):
+                    v_str = str(val).strip()
+                    if v_str.endswith('.0'): v_str = v_str[:-2]
+                    if v_str in target_cols_disp:
+                        time_mapping[v_str] = c_idx
+                
+                valid_keys = [k for k in target_cols_disp if k in time_mapping]
+                for idx in range(header_idx + 1, len(df)):
+                    dye_name = str(df.iloc[idx, 1]).strip()
+                    if not dye_name or dye_name in ['None', 'Dyes', '염료', 'No.']: continue
+                    try:
+                        y_vals = [float(df.iloc[idx, time_mapping[k]]) for k in valid_keys]
+                        comp_dict[dye_name] = {"type": "disperse", "times": valid_keys, "values": y_vals}
+                    except: continue
+                    
+        return comp_dict
+    except Exception as e:
+        st.error(f"⚠️ 상용성 데이터 로드 중 오류 발생: {str(e)}")
+        return {}
 
 def predict_color_fastness(recipe, db_df):
-    if db_df is None: return {"Error": "color_fastness.xlsx not found."}
+    pd.set_option('future.no_silent_downcasting', True)
+    if db_df is None: return {"Error": "견뢰도 데이터베이스 파일을 찾을 수 없습니다."}
+        
+    predicted_results = {}
     recipe_dyes = db_df[db_df['염료명'].isin(recipe.keys())].copy()
-    if recipe_dyes.empty: return {"Error": "No matching dyes in DB."}
+    
+    if recipe_dyes.empty: return {"Error": "DB에 일치하는 염료가 없어 견뢰도를 예측할 수 없습니다."}
 
     recipe_dyes['처방농도'] = recipe_dyes['염료명'].map(recipe)
-    recipe_dyes['비율'] = recipe_dyes['처방농도'] / recipe_dyes['S/D\n1/1']
-    grade_columns = recipe_dyes.columns[2:-2] 
+    
+    def is_sd_col(col_name):
+        c_str = str(col_name).upper().replace(" ", "").replace("::", "")
+        return "S/D" in c_str or "SD" in c_str or ("농도" in c_str and col_name != "처방농도")
+    
+    sd_cols = [col for col in recipe_dyes.columns if is_sd_col(col)]
+    
+    if sd_cols:
+        recipe_dyes['Merged_SD'] = recipe_dyes[sd_cols].bfill(axis=1).iloc[:, 0]
+        recipe_dyes['Merged_SD'] = pd.to_numeric(recipe_dyes['Merged_SD'], errors='coerce').fillna(1.0)
+        recipe_dyes['비율'] = recipe_dyes['처방농도'] / recipe_dyes['Merged_SD']
+    else: recipe_dyes['비율'] = recipe_dyes['처방농도'] / 1.0
+    
+    def is_fastness_col(col_name):
+        c_str = str(col_name).strip()
+        if c_str in ['선택', '염료그룹', '염료명', '처방농도', '비율', '비고', 'Merged_SD']: return False
+        if is_sd_col(c_str): return False
+        if c_str.startswith('Unnamed'): return False
+        if '상용성' in c_str: return False
+        if c_str.replace('.', '', 1).isdigit(): return False
+        if c_str in ['5회', '10회', '15회', '20회', '30회', '40회', '50회']: return False
+        return True
+
+    grade_columns = [col for col in recipe_dyes.columns if is_fastness_col(col)]
     max_ratio = recipe_dyes['비율'].max()
     
-    predicted_results = {}
     for col in grade_columns:
-        min_grade = recipe_dyes[col].min()
-        if max_ratio >= 1.5 and any(keyword in col for keyword in ['마찰', '세탁', '땀']): min_grade -= 0.5
-        elif max_ratio <= 0.5 and '일광견뢰도' in col and '1/6' not in col: min_grade -= 0.5
+        numeric_grades = pd.to_numeric(recipe_dyes[col], errors='coerce').dropna()
+        if numeric_grades.empty: continue
+            
+        min_grade = numeric_grades.min()
+        is_wash_rub_pers = any(keyword in str(col) for keyword in ['마찰', '세탁', '땀', '반복세탁', '물'])
+        
+        if max_ratio >= 1.5 and is_wash_rub_pers: min_grade -= 0.5
+        elif max_ratio <= 0.5 and is_wash_rub_pers:
+            min_grade += 0.5
+            min_grade = min(4.5, min_grade)
+            
+        if max_ratio <= 0.5 and '일광' in str(col) and '1/6' not in str(col): min_grade -= 0.5
         predicted_results[col] = max(1.0, min_grade)
+
     return predicted_results
 
 blank_r_str_reactive = "61.487896,64.536758,67.636276,70.483246,73.516251,75.622711,77.759293,79.583626,80.990044,82.235336,83.458176,84.331772,85.404106,86.164101,86.926323,87.612724,88.086739,88.541801,88.927353,89.348244,89.645943,89.882187,90.113014,90.397278,90.583130,90.746536,90.858932,91.020134,91.199127,91.403587,91.537102,91.670677,91.884819,91.980095,92.083275"
@@ -508,6 +744,178 @@ elif dye_mode == "Disperse": blank_ks = blank_ks_disp_woven if st.session_state.
 elif dye_mode == "Reactive (CPB)": blank_ks = blank_ks_cpb; option_letter = "R"
 elif dye_mode == "CDP": blank_ks = blank_ks_cdp; option_letter = "Ac"
 elif dye_mode == "Acid": blank_ks = blank_ks_acid; option_letter = "A"
+
+# ==========================================
+# 팝업창(Dialog) UI 함수
+# ==========================================
+@st.dialog(t("popup_title"), width="large")
+def show_analysis_popup(recipe_dict, fastness_db, comp_data):
+    st.markdown("""
+    <style>
+        div[data-testid="stModal"] div[role="dialog"],
+        div[data-testid="stDialog"] { max-width: 850px !important; margin-left: auto !important; margin-right: auto !important; }
+    </style>
+    """, unsafe_allow_html=True)
+
+    st.subheader(f":material/monitoring: {t('comp_sim')}")
+    fig = go.Figure()
+    custom_colors = ['#FFD700', '#FF4B4B', '#1F77B4', '#9467bd', '#2ca02c']
+    valid_plot_count = 0
+    is_disperse = False
+    
+    for idx, (dye_name, conc) in enumerate(recipe_dict.items()):
+        if conc <= 0 or dye_name not in comp_data: continue
+        valid_plot_count += 1
+        dye_info = comp_data[dye_name]
+        color = custom_colors[idx % len(custom_colors)]
+        
+        if dye_info.get("type") == "disperse":
+            is_disperse = True
+            fig.add_trace(go.Scatter(x=dye_info["times"], y=dye_info["values"], mode='lines', name=dye_name, line=dict(width=3, color=color, shape='spline')))
+        else:
+            x1 = [t for t in dye_info["times"] if t <= 20]
+            y1 = [v for t, v in zip(dye_info["times"], dye_info["values"]) if t <= 20]
+            x2 = [t for t in dye_info["times"] if t >= 25]
+            y2 = [v for t, v in zip(dye_info["times"], dye_info["values"]) if t >= 25]
+            
+            fig.add_trace(go.Scatter(x=x1, y=y1, mode='lines', name=dye_name, legendgroup=dye_name, line=dict(width=3, color=color, shape='spline')))
+            fig.add_trace(go.Scatter(x=x2, y=y2, mode='lines', name=dye_name, legendgroup=dye_name, showlegend=False, line=dict(width=3, color=color, shape='spline')))
+        
+    if valid_plot_count > 0:
+        fig.update_layout(height=400, xaxis_title=t("comp_x_disp") if is_disperse else t("comp_x_reac"), yaxis_title=t("comp_y"), hovermode="x unified", legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1))
+        if is_disperse: fig.update_xaxes(type='category')
+        else:
+            fig.add_vline(x=20, line_dash="dash", line_color="gray")
+            fig.add_vline(x=25, line_dash="dash", line_color="gray")
+        st.plotly_chart(fig, use_container_width=True)
+    else: st.info(t("no_comp_data"))
+
+    st.markdown("---")
+    st.subheader(f":material/calculate: {t('lab_dip_guide')}")
+    st.markdown(f"<div style='font-size: 13px; color: #666; margin-bottom: 10px;'>{t('lab_dip_desc')}</div>", unsafe_allow_html=True)
+
+    active_dyes = [d for d, c in recipe_dict.items() if c > 0 and d in comp_data]
+    if active_dyes:
+        base_times = comp_data[active_dyes[0]]["times"]
+        max_exh_at_time = []
+        for i in range(len(base_times)):
+            max_val = max([comp_data[d]["values"][i] for d in active_dyes])
+            max_exh_at_time.append(max_val)
+            
+        max_gaps = {}
+        is_disp = comp_data[active_dyes[0]].get("type") == "disperse"
+        if is_disp: start_idx = base_times.index('130') if '130' in base_times else 0
+        else: start_idx = next((i for i, t in enumerate(base_times) if isinstance(t, int) and t >= 25), 0)
+
+        for d in active_dyes:
+            vals = comp_data[d]["values"]
+            gaps = []
+            for i in range(start_idx, len(base_times)): gaps.append(max_exh_at_time[i] - vals[i])
+            max_gaps[d] = max(gaps) if gaps else 0
+
+        comparison_data = []
+        for dye_name, original_conc in recipe_dict.items():
+            if original_conc <= 0: continue
+            if dye_name in max_gaps:
+                gap = max_gaps[dye_name]
+                adjustment_ratio = 1.0 + (gap * 0.4) / 100.0 
+                predicted_conc = original_conc * adjustment_ratio
+                gap_text = t("max_delay", gap=gap) if gap > 0.1 else t("baseline_fast")
+            else:
+                predicted_conc = original_conc
+                adjustment_ratio = 1.0
+                gap_text = t("no_data")
+            comparison_data.append({t("dye_name"): dye_name, t("calc_recipe"): f"{original_conc:.4f} %", t("pred_recipe"): f"{predicted_conc:.4f} %", t("adj_needed"): f"+{(adjustment_ratio - 1.0)*100:.1f} %" if adjustment_ratio > 1.0 else "-", t("comp_diff"): gap_text})
+
+        df_comparison = pd.DataFrame(comparison_data)
+        def highlight_predicted_col(s): return ['background-color: #fff9e6; font-weight: bold; color: #d97706;' if s.name == t("pred_recipe") else '' for _ in s]
+        st.dataframe(df_comparison.style.apply(highlight_predicted_col, axis=0), hide_index=True, use_container_width=True)
+    else: st.info(t("no_comp_pred"))
+
+    st.markdown("---")
+    st.subheader(f":material/science: {t('fastness_detail')}")
+    pred_result = predict_color_fastness(recipe_dict, fastness_db)
+    
+    if "Error" in pred_result: st.warning(pred_result["Error"])
+    else:
+        def format_grade(val):
+            try:
+                if pd.isna(val) or str(val).strip() == '': return "-"
+                f_val = float(val)
+                return str(int(f_val)) if f_val.is_integer() else str(f_val).rstrip('0').rstrip('.')
+            except: return str(val)
+
+        def format_display_columns(cols):
+            # 엑셀 표 안의 한글 용어들을 영어로 바꿔주는 변환 함수
+            def translate_col(col_str):
+                if st.session_state.lang != "en": return col_str
+                trans_dict = {
+                    "일광": "Light", "세탁": "Washing", "땀일광(산성)": "Persp+Light(Acid)", "땀일광(알칼리)": "Persp+Light(Alkali)", 
+                    "땀(산성)": "Persp(Acid)", "땀(알칼리)": "Persp(Alkali)", "물": "Water", "염소수": "Chlorine", "다림질": "Ironing",
+                    "건": "Dry", "습": "Wet", "변퇴색": "Color Change", "오염": "Staining",
+                    "아세테이트": "Acetate", "면": "Cotton", "나일론": "Nylon", "폴리": "Poly",
+                    "아크릴": "Acrylic", "모": "Wool", "실크": "Silk"
+                }
+                res = str(col_str)
+                # 단어가 긴 것부터 찾아 바꿔야 오류가 안 납니다 (예: '땀(일광)'을 '땀'보다 먼저 변환)
+                for k in sorted(trans_dict.keys(), key=len, reverse=True):
+                    res = res.replace(k, trans_dict[k])
+                return res
+
+            # 번역 먼저 실행
+            translated_cols = [translate_col(c) for c in cols]
+            
+            # 2단 헤더(::) 분리 작업
+            has_multi = any('::' in str(c) for c in translated_cols)
+            if has_multi:
+                tuples = []
+                for c in translated_cols:
+                    if '::' in str(c):
+                        parts = str(c).split('::', 1)
+                        tuples.append((parts[0], parts[1]))
+                    else: tuples.append((c, ''))
+                return pd.MultiIndex.from_tuples(tuples)
+            else: return translated_cols
+
+        st.markdown(t("indiv_fastness"))
+        target_cols = list(pred_result.keys())
+        
+        def is_sd_col(col_name):
+            c_str = str(col_name).upper().replace(" ", "").replace("::", "")
+            return "S/D" in c_str or "SD" in c_str or ("농도" in c_str and col_name != "처방농도")
+            
+        sd_cols = [c for c in fastness_db.columns if is_sd_col(c)]
+        display_cols = ['염료명']
+        if sd_cols: display_cols.extend(sd_cols)
+        display_cols.extend(target_cols)
+        
+        if fastness_db is not None:
+            ind_df = fastness_db[fastness_db['염료명'].isin(recipe_dict.keys())].copy()
+            recipe_order = list(recipe_dict.keys())
+            ind_df['염료명'] = pd.Categorical(ind_df['염료명'], categories=recipe_order, ordered=True)
+            ind_df = ind_df.sort_values('염료명')
+            
+            exist_cols = [c for c in display_cols if c in ind_df.columns]
+            for c in exist_cols.copy():
+                if ind_df[c].isna().all(): exist_cols.remove(c)
+            
+            display_df = ind_df[exist_cols].copy()
+            for c in exist_cols:
+                if c != '염료명': display_df[c] = display_df[c].apply(format_grade)
+            
+            display_df.rename(columns={'염료명': t('dye_name')}, inplace=True)
+            display_df.columns = format_display_columns(display_df.columns)
+            st.dataframe(display_df, hide_index=True, use_container_width=True)
+        
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.markdown(t("mix_fastness"))
+        st.markdown(f"<div style='font-size: 12px; color: #666; margin-bottom: 5px;'>{t('mix_fastness_desc')}</div>", unsafe_allow_html=True)
+        
+        pred_df = pd.DataFrame({str(k): [format_grade(v)] for k, v in pred_result.items()})
+        pred_df.columns = format_display_columns(pred_df.columns)
+        
+        def color_mix(s): return ['background-color: #E8F0FE; font-weight: bold; color: #1A73E8;'] * len(s)
+        st.dataframe(pred_df.style.apply(color_mix, axis=1), hide_index=True, use_container_width=True)
 
 # ==========================================
 # 4.5 백포 선택 팝업 (Disperse 전용)
@@ -712,6 +1120,7 @@ with col_menu:
 
     with st.container(border=True):
         st.markdown(f"<strong style='display: flex; align-items: center; font-size: 16px;'><span class='material-symbols-outlined' style='margin-right:6px;'>settings</span>{t('step2_title')}</strong>", unsafe_allow_html=True)
+        
         st.markdown(f"<div style='font-size: 13px; font-weight: bold; margin-bottom: 5px; margin-top: 10px; display: flex; align-items: center;'><span class='material-symbols-outlined' style='margin-right:4px; font-size:16px;'>label</span>{t('auto_brand')}</div>", unsafe_allow_html=True)
         brand_list = ["직접 선택 (Manual)"] + sorted(brand_df['Brand'].dropna().unique().tolist())
         st.selectbox(t("auto_brand_desc"), brand_list, key="brand_selector", on_change=on_brand_change, label_visibility="collapsed", format_func=lambda x: "Manual" if x=="직접 선택 (Manual)" and st.session_state.lang=="en" else x)
@@ -721,10 +1130,27 @@ with col_menu:
         light_options_optional = list(LIGHT_MAP.keys()) + ["없음"]
         
         l_col1, l_col2, l_col3 = st.columns(3)
-        fmt_light = lambda x: "None" if x=="없음" and st.session_state.lang=="en" else x
-        light1_name = l_col1.selectbox(t("light_1"), light_options_all, key="l1")
-        light2_name = l_col2.selectbox(t("light_2"), light_options_optional, key="l2", format_func=fmt_light) 
-        light3_name = l_col3.selectbox(t("light_3"), light_options_optional, key="l3", format_func=fmt_light) 
+        
+        # 포맷 함수 (화면에 표시할 때만 영어로 변환)
+        def format_light_name(x):
+            if str(x).strip() == "없음" and st.session_state.lang == "en":
+                return "None"
+            return x
+            
+        # 기존 세션에 저장된 값을 통해 인덱스 번호 찾기 (없으면 기본값)
+        idx1 = light_options_all.index(st.session_state.l1) if st.session_state.l1 in light_options_all else 0
+        idx2 = light_options_optional.index(st.session_state.l2) if st.session_state.l2 in light_options_optional else len(light_options_optional)-1
+        idx3 = light_options_optional.index(st.session_state.l3) if st.session_state.l3 in light_options_optional else len(light_options_optional)-1
+
+        # 언어가 바뀔 때마다 위젯을 강제로 새로고침하기 위해 key에 언어를 포함시킴
+        light1_name = l_col1.selectbox(t("light_1"), light_options_all, index=idx1, key=f"l1_ui_{st.session_state.lang}")
+        light2_name = l_col2.selectbox(t("light_2"), light_options_optional, index=idx2, format_func=format_light_name, key=f"l2_ui_{st.session_state.lang}") 
+        light3_name = l_col3.selectbox(t("light_3"), light_options_optional, index=idx3, format_func=format_light_name, key=f"l3_ui_{st.session_state.lang}") 
+        
+        # 선택된 값을 다시 세션에 수동으로 덮어쓰기 (내부 로직은 '없음'을 그대로 사용하도록 유지)
+        st.session_state.l1 = light1_name
+        st.session_state.l2 = light2_name
+        st.session_state.l3 = light3_name
 
     with st.container(border=True):
         st.markdown(f"<strong style='display: flex; align-items: center; font-size: 16px;'><span class='material-symbols-outlined' style='margin-right:6px;'>science</span>{t('step3_title')}</strong>", unsafe_allow_html=True)
@@ -997,20 +1423,27 @@ with col_results:
 
         with st.container(border=True):
             st.markdown(f"<h4 style='display: flex; align-items: center; margin-bottom: 0;'><span class='material-symbols-outlined' style='margin-right:8px;'>science</span>{t('fastness_title')}</h4>", unsafe_allow_html=True)
+            
             available_ranks = list(range(1, len(top_results) + 1))
-            selected_rank = st.radio(t("fastness_sel"), options=available_ranks, horizontal=True)
             
-            res = top_results[selected_rank - 1]
-            fastness_db = load_fastness_db()
-            recipe_for_pred = {display_name_dict.get(dye_raw, dye_raw): res['conc'][i] for i, dye_raw in enumerate(res['combo']) if res['conc'][i] > 0}
-            pred_result = predict_color_fastness(recipe_for_pred, fastness_db)
+            # 라디오버튼과 팝업버튼을 가로로 2:1 비율로 배치
+            col_rank, col_popup = st.columns([2, 1], vertical_alignment="bottom")
             
-            if "Error" in pred_result:
-                st.warning(pred_result["Error"], icon=":material/warning:")
-            else:
-                st.markdown(f"<div style='font-size: 12px; color: #666; margin-bottom: 5px;'>{t('fastness_desc')}</div>", unsafe_allow_html=True)
-                pred_df = pd.DataFrame({k.replace('\n', ' '): [v] for k, v in pred_result.items()})
-                st.dataframe(pred_df, hide_index=True, use_container_width=True)
+            with col_rank:
+                selected_rank = st.radio(t("fastness_sel"), options=available_ranks, horizontal=True)
+                
+            with col_popup:
+                # 팝업 띄우기 버튼
+                if st.button(t("view_comp_fast"), use_container_width=True, icon=":material/insights:"):
+                    res = top_results[selected_rank - 1]
+                    fastness_db = load_fastness_db()
+                    comp_data = load_compatibility_data()
+                    
+                    # 팝업 데이터 처리를 위해 처방(Recipe) 딕셔너리 생성
+                    recipe_for_pred = {display_name_dict.get(dye_raw, dye_raw): res['conc'][i] for i, dye_raw in enumerate(res['combo']) if res['conc'][i] > 0}
+                    
+                    # 미리 정의된 팝업 함수(Step 2) 실행
+                    show_analysis_popup(recipe_for_pred, fastness_db, comp_data)
 
     elif not run_search:
         st.info(t("req_target"), icon=":material/info:")

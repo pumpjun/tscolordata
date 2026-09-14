@@ -5,3 +5,4 @@ scipy
 colour-science
 openpyxl
 pyperclip
+plotly
