@@ -12,114 +12,115 @@ import re
 import pyperclip
 import plotly.graph_objects as go
 
+
 # ==========================================
 # 0. 다국어 지원 (번역 딕셔너리 및 함수)
 # ==========================================
 LANG_DICT = {
-    "title_disp": {"ko": "백포 선택 (Disperse)", "en": "Select Blank (Disperse)"},
-    "desc_disp": {"ko": "분산염료처방 탐색에 사용할 백포를 선택해주세요.", "en": "Please select the blank for Disperse dye recipe search."},
-    "confirm": {"ko": "확인", "en": "Confirm"},
-    "company_all": {"ko": "전체 보기", "en": "All Companies"},
-    "company_sel": {"ko": "업체 선택", "en": "Select Company"},
-    "dye_list": {"ko": "염료 리스트", "en": "Dye List"},
-    "click_guide": {"ko": "클릭하여 선택 / 해제하세요.", "en": "Click to select / deselect."},
-    "paste_ph": {"ko": "복사한 텍스트를 붙여넣으세요 (Ctrl+V)", "en": "Paste copied text here (Ctrl+V)"},
-    "load_ohyoung": {"ko": "Ohyoung Dye Finder에서 불러오기", "en": "Load from Ohyoung Dye Finder"},
-    "search_dye": {"ko": "염료 검색", "en": "Search Dye"},
-    "search_ph": {"ko": "검색어 입력 후 Enter ↵", "en": "Type and press Enter ↵"},
-    "reset": {"ko": "초기화", "en": "Reset"},
-    "step1_title": {"ko": "Step 1. 타겟 색상 업로드 (QTX)", "en": "Step 1. Upload Target Color (QTX)"},
-    "upload_qtx": {"ko": "QTX 파일 업로드", "en": "Upload QTX File"},
-    "target_sel": {"ko": "타겟 색상 선택", "en": "Select Target Color"},
-    "preview_wait": {"ko": "미리보기 대기중", "en": "Waiting for Preview"},
-    "step2_title": {"ko": "Step 2. 검색 옵션 설정", "en": "Step 2. Search Options"},
-    "auto_brand": {"ko": "브랜드별 광원 자동 세팅", "en": "Auto Light Setting by Brand"},
-    "auto_brand_desc": {"ko": "브랜드를 선택하면 광원이 자동으로 지정됩니다.", "en": "Lights are auto-set when a brand is selected."},
-    "light_detail": {"ko": "광원 세부 설정 (수정 가능)", "en": "Light Details (Editable)"},
-    "light_1": {"ko": "1차 광원", "en": "1st Light"},
-    "light_2": {"ko": "2차 광원", "en": "2nd Light"},
-    "light_3": {"ko": "3차 광원", "en": "3rd Light"},
-    "step3_title": {"ko": "Step 3. 실행 및 상태", "en": "Step 3. Execution & Status"},
-    "selected_count": {"ko": "현재 사이드바에서 선택된 염료: **{count}개**", "en": "Currently selected dyes: **{count}**"},
-    "clear_all": {"ko": "선택 전체 초기화", "en": "Clear All Selections"},
-    "btn_need_qtx": {"ko": "처방 탐색 시작 (QTX 업로드 필요)", "en": "Start Search (Upload QTX First)"},
-    "btn_need_dye": {"ko": "처방 탐색 시작 (염료 1개 이상 선택 필요)", "en": "Start Search (Select 1+ Dye)"},
-    "btn_start": {"ko": "처방 탐색 시작", "en": "Start Recipe Search"},
-    "result_title": {"ko": "처방 탐색 결과", "en": "Recipe Search Results"},
-    "finding": {"ko": "최적의 염료를 찾고있습니다..", "en": "Finding the optimal dyes.."},
-    "finding_desc": {"ko": "조합을 탐색하고 정밀 분석을 수행하는 중입니다.<br>화면이 멈춘 것이 아니니 잠시만 기다려주세요.", "en": "Searching combinations and performing precise analysis.<br>Please wait, the screen is not frozen."},
-    "fastness_title": {"ko": "탐색된 처방 예상 견뢰도 분석", "en": "Predicted Fastness Analysis"},
-    "fastness_sel": {"ko": "견뢰도를 확인할 처방 순위 선택:", "en": "Select recipe rank to check fastness:"},
-    "fastness_desc": {"ko": "※ S/D 1/1 대비 농도 패널티 반영 수치입니다.", "en": "※ Fastness is adjusted based on concentration vs S/D 1/1."},
-    "req_target": {"ko": "좌측 패널에서 타겟 색상을 업로드하고 처방 탐색을 시작해주세요.", "en": "Please upload a target color and start the search."},
-    "no_recipe": {"ko": "유효한 처방을 찾지 못했습니다.", "en": "No valid recipe found."},
-    "missing_dyes": {"ko": "데이터 부족으로 제외된 염료 {count}개:\n{dyes}", "en": "{count} dyes excluded due to missing data:\n{dyes}"},
-    "success_add": {"ko": "성공적으로 {count}개의 염료를 추가했습니다!", "en": "Successfully added {count} dyes!"},
-    "fail_add": {"ko": "추가할 수 있는 새로운 염료가 없습니다 (이미 있거나 매칭 실패).", "en": "No new dyes to add (already exist or matching failed)."},
-    "warn_paste": {"ko": "먼저 텍스트창에 복사한 내용을 붙여넣어 주세요.", "en": "Please paste text in the input box first."},
-    "target_found": {"ko": "인식된 타겟: **{name}**", "en": "Recognized Target: **{name}**"},
-    "qtx_error": {"ko": "QTX 파일에서 데이터를 찾을 수 없습니다.", "en": "No data found in the QTX file."},
-    "qtx_parse_error": {"ko": "QTX 분석 오류: {e}", "en": "QTX Parse Error: {e}"},
-    "popup_title": {"ko": "처방 상세 분석 (상용성 & 견뢰도)", "en": "Recipe Detailed Analysis..."},
-    "comp_sim": {"ko": "상용성 시뮬레이션", "en": "Compatibility Simulation"},
-    "comp_x_disp": {"ko": "온도 / 유지 시간", "en": "Temp / Hold Time"},
-    "comp_x_reac": {"ko": "공정 시간 (분)", "en": "Process Time (min)"},
-    "comp_y": {"ko": "염착률 (%)", "en": "Exhaustion (%)"},
-    "no_comp_data": {"ko": "선택된 염료의 상용성 실험 데이터가 없습니다.", "en": "No compatibility test data for the selected dyes."},
-    "lab_dip_guide": {"ko": "상용성 기반 Lab dip 예측 (가이드)", "en": "Lab Dip Prediction based on Compatibility (Guide)"},
-    "lab_dip_desc": {"ko": "※ 염료 간 흡착 속도 차이(경쟁 흡착)로 인한 수율 저하를 계산합니다.<br>전체 평균이 아닌, <strong>가장 격차가 심하게 벌어지는 시점(초/중반부 최대 Gap)</strong>을 추적하여 보정치를 산출합니다.", "en": "※ Calculates yield reduction due to differences in adsorption speed.<br>It tracks the <strong>maximum gap at the early/mid stages</strong> rather than the overall average to calculate the adjustment."},
-    "max_delay": {"ko": "최대 -{gap:.1f}% 지연", "en": "Max -{gap:.1f}% Delay"},
-    "baseline_fast": {"ko": "기준 (가장 빠름)", "en": "Baseline (Fastest)"},
-    "no_data": {"ko": "데이터 없음", "en": "No Data"},
-    "dye_name": {"ko": "염료명", "en": "Dye Name"},
-    "calc_recipe": {"ko": "산출 처방 (원본)", "en": "Calculated Recipe (Original)"},
-    "pred_recipe": {"ko": "예상 보정 처방 (가이드)", "en": "Predicted Recipe (Guide)"},
-    "adj_needed": {"ko": "증감 필요량", "en": "Adjustment Needed"},
-    "comp_diff": {"ko": "상용성 차이 (Max Gap)", "en": "Compatibility Diff (Max Gap)"},
-    "no_comp_pred": {"ko": "예측값을 계산하기 위한 상용성 데이터가 충분하지 않습니다.", "en": "Not enough compatibility data to calculate predictions."},
-    "fastness_detail": {"ko": "상세 견뢰도 분석", "en": "Detailed Fastness Analysis"},
-    "indiv_fastness": {"ko": "**1. 개별 염료 견뢰도 (DB 원본)**", "en": "**1. Individual Dye Fastness (DB Original)**"},
-    "mix_fastness": {"ko": "**2. MIX 예상 견뢰도 (처방 농도 반영)**", "en": "**2. MIX Predicted Fastness (Recipe Conc. Applied)**"},
-    "mix_fastness_desc": {"ko": "※ 가장 취약한 염료 등급 기준이며, 기준 농도 대비 처방 농도에 따른 보정(보너스/패널티)이 자동 반영된 결과입니다. (최대 4.5급)", "en": "※ Based on the weakest dye grade, with bonuses/penalties applied based on recipe concentration. (Max 4.5)"},
-    "add_to_list": {"ko": "리스트에 처방 추가하기", "en": "Add Recipe to List"},
-    "select_rank": {"ko": "추가/분석할 순위 선택", "en": "Select Rank to Add/Analyze"},
-    "view_comp_fast": {"ko": "상용성 및 견뢰도 보기", "en": "View Compatibility & Fastness"},
-    "color_name_input": {"ko": "Color Name (색상명):", "en": "Color Name:"},
-    "recipe_detail_set": {"ko": "처방 농도 세부 설정", "en": "Recipe Concentration Settings"},
-    "apply_blend": {"ko": "혼방 비율 (CVC / T/C) 적용하기", "en": "Apply Blend Ratio (CVC / T/C)"},
-    "cotton_ratio": {"ko": "Cotton (면) 비율 (%)", "en": "Cotton Ratio (%)"},
-    "poly_ratio": {"ko": "Poly (폴리) 비율 (%)", "en": "Poly Ratio (%)"},
-    "applied_ratio": {"ko": "적용 비율: **{ratio}%**", "en": "Applied Ratio: **{ratio}%**"},
-    "apply_pdps": {"ko": "PDPS 적용 (처방 농도의 75%만 산출)", "en": "Apply PDPS (Yields 75% of recipe)"},
-    "pdps_applied": {"ko": "PDPS 적용: **75%** 산출", "en": "PDPS Applied: **75%** yield"},
-    "add_current_recipe": {"ko": "현재 처방을 리스트에 추가", "en": "Add Current Recipe to List"},
-    "cart_status": {"ko": "현재 장바구니 현황 (총 {count}개)", "en": "Current Cart Status (Total {count})"},
-    "cart_color_name": {"ko": "색상명 (Color Name)", "en": "Color Name"},
-    "cart_dye_mode": {"ko": "포함된 염료 모드", "en": "Included Dye Modes"},
-    "empty_cart": {"ko": "장바구니 비우기", "en": "Empty Cart"},
-    "create_excel": {"ko": "엑셀 리포트 생성", "en": "Create Excel Report"},
-    "base_template": {"ko": "기준 템플릿: ", "en": "Base Template: "},
-    "generate_excel_btn": {"ko": "엑셀 파일 생성하기", "en": "Generate Excel File"},
-    "generating_excel": {"ko": "엑셀 파일을 생성하는 중입니다...", "en": "Generating Excel file..."},
-    "excel_ready": {"ko": "엑셀 파일이 준비되었습니다! 아래 버튼을 눌러 다운로드하세요.", "en": "Excel file is ready! Click the button below to download."},
-    "excel_error": {"ko": "엑셀 생성 중 문제가 발생했습니다:\n\n{e}", "en": "An error occurred while creating Excel:\n\n{e}"},
-    "download_excel": {"ko": "완성된 엑셀 파일 다운로드", "en": "Download Completed Excel File"},
-    "cart_empty_info": {"ko": "장바구니가 비어 있습니다. [처방 탐색 결과] 탭에서 원하는 처방을 리스트에 추가해주세요.", "en": "Cart is empty. Please add a recipe from the [Search Results] tab."},
-    "tab_search": {"ko": "처방 탐색 결과", "en": "Recipe Search Results"},
-    "tab_cart": {"ko": "장바구니 및 엑셀 출력", "en": "Cart & Excel Export"},
-    "err_cpb_only": {"ko": "장바구니가 'CPB' 모드입니다. 다른 염료를 추가할 수 없습니다.", "en": "Cart is in 'CPB' mode. Cannot add other dyes."},
-    "err_cdp_only": {"ko": "장바구니가 'CDP' 모드입니다. 다른 모드의 염료를 추가할 수 없습니다.", "en": "Cart is in 'CDP' mode. Cannot add other dye modes."},
-    "err_acid_only": {"ko": "장바구니가 'Acid' 모드입니다. 다른 모드의 염료를 추가할 수 없습니다.", "en": "Cart is in 'Acid' mode. Cannot add other dye modes."},
-    "err_has_others_cpb": {"ko": "장바구니에 다른 염료가 있습니다. CPB 처방을 추가할 수 없습니다.", "en": "Cart contains other dyes. Cannot add CPB recipe."},
-    "err_has_others_cdp": {"ko": "장바구니에 다른 염료가 있습니다. CDP 처방을 추가할 수 없습니다.", "en": "Cart contains other dyes. Cannot add CDP recipe."},
-    "err_has_others_acid": {"ko": "장바구니에 다른 염료가 있습니다. Acid 처방을 추가할 수 없습니다.", "en": "Cart contains other dyes. Cannot add Acid recipe."},
-    "err_cvc_need_d": {"ko": "혼합(CVC)을 원하시면 첫 번째 색상에 분산(D) 염료를 먼저 추가해주세요.", "en": "For CVC blend, please add Disperse (D) dyes to the first color."},
-    "err_cvc_need_r": {"ko": "혼합(CVC)을 원하시면 첫 번째 색상에 반응성(R) 염료를 먼저 추가해주세요.", "en": "For CVC blend, please add Reactive (R) dyes to the first color."},
-    "success_added_cart": {"ko": "'{name}' 처방 리스트 추가 완료! (총 {count}개)", "en": "Recipe '{name}' added to list! (Total {count})"},
-    "success_added_cart_ratio": {"ko": "농도 비율({ratio}%) 적용하여 '{name}' 처방 추가 완료! (총 {count}개)", "en": "Recipe '{name}' added with ratio ({ratio}%)! (Total {count})"},
-    "prog_init": {"ko": "총 {count}개 조합에 대해 사전 탐색을 진행합니다...", "en": "Starting initial search for {count} combinations..."},
-    "prog_fast": {"ko": "총 {total}개 조합 고속 필터링 중... ({curr}/{total})", "en": "Fast filtering {total} combinations... ({curr}/{total})"},
-    "prog_precise": {"ko": "최적의 {total}개 정밀 검색 중: {names} ({curr}/{total})", "en": "Precise searching top {total} recipes: {names} ({curr}/{total})"}
+    "title_disp": {"ko": "백포 선택 (Disperse)", "en": "Select Blank (Disperse)", "vi": "Chọn vải trắng (Disperse)"},
+    "desc_disp": {"ko": "분산염료처방 탐색에 사용할 백포를 선택해주세요.", "en": "Please select the blank for Disperse dye recipe search.", "vi": "Vui lòng chọn vải trắng để tìm kiếm công thức thuốc nhuộm phân tán."},
+    "confirm": {"ko": "확인", "en": "Confirm", "vi": "Xác nhận"},
+    "company_all": {"ko": "전체 보기", "en": "All Companies", "vi": "Tất cả công ty"},
+    "company_sel": {"ko": "업체 선택", "en": "Select Company", "vi": "Chọn công ty"},
+    "dye_list": {"ko": "염료 리스트", "en": "Dye List", "vi": "Danh sách thuốc nhuộm"},
+    "click_guide": {"ko": "클릭하여 선택 / 해제하세요.", "en": "Click to select / deselect.", "vi": "Nhấp để chọn / bỏ chọn."},
+    "paste_ph": {"ko": "복사한 텍스트를 붙여넣으세요 (Ctrl+V)", "en": "Paste copied text here (Ctrl+V)", "vi": "Dán văn bản đã sao chép vào đây (Ctrl+V)"},
+    "load_ohyoung": {"ko": "Ohyoung Dye Finder에서 불러오기", "en": "Load from Ohyoung Dye Finder", "vi": "Tải từ Ohyoung Dye Finder"},
+    "search_dye": {"ko": "염료 검색", "en": "Search Dye", "vi": "Tìm kiếm thuốc nhuộm"},
+    "search_ph": {"ko": "검색어 입력 후 Enter ↵", "en": "Type and press Enter ↵", "vi": "Nhập từ khóa và nhấn Enter ↵"},
+    "reset": {"ko": "초기화", "en": "Reset", "vi": "Đặt lại"},
+    "step1_title": {"ko": "Step 1. 타겟 색상 업로드 (QTX)", "en": "Step 1. Upload Target Color (QTX)", "vi": "Bước 1. Tải lên màu mục tiêu (QTX)"},
+    "upload_qtx": {"ko": "QTX 파일 업로드", "en": "Upload QTX File", "vi": "Tải lên tệp QTX"},
+    "target_sel": {"ko": "타겟 색상 선택", "en": "Select Target Color", "vi": "Chọn màu mục tiêu"},
+    "preview_wait": {"ko": "미리보기 대기중", "en": "Waiting for Preview", "vi": "Đang chờ xem trước"},
+    "step2_title": {"ko": "Step 2. 검색 옵션 설정", "en": "Step 2. Search Options", "vi": "Bước 2. Tùy chọn tìm kiếm"},
+    "auto_brand": {"ko": "브랜드별 광원 자동 세팅", "en": "Auto Light Setting by Brand", "vi": "Tự động cài đặt nguồn sáng theo thương hiệu"},
+    "auto_brand_desc": {"ko": "브랜드를 선택하면 광원이 자동으로 지정됩니다.", "en": "Lights are auto-set when a brand is selected.", "vi": "Nguồn sáng sẽ được tự động cài đặt khi chọn thương hiệu."},
+    "light_detail": {"ko": "광원 세부 설정 (수정 가능)", "en": "Light Details (Editable)", "vi": "Cài đặt nguồn sáng chi tiết (Có thể chỉnh sửa)"},
+    "light_1": {"ko": "1차 광원", "en": "1st Light", "vi": "Nguồn sáng 1"},
+    "light_2": {"ko": "2차 광원", "en": "2nd Light", "vi": "Nguồn sáng 2"},
+    "light_3": {"ko": "3차 광원", "en": "3rd Light", "vi": "Nguồn sáng 3"},
+    "step3_title": {"ko": "Step 3. 실행 및 상태", "en": "Step 3. Execution & Status", "vi": "Bước 3. Thực hiện & Trạng thái"},
+    "selected_count": {"ko": "현재 사이드바에서 선택된 염료: **{count}개**", "en": "Currently selected dyes: **{count}**", "vi": "Số thuốc nhuộm hiện được chọn: **{count}**"},
+    "clear_all": {"ko": "선택 전체 초기화", "en": "Clear All Selections", "vi": "Bỏ chọn tất cả"},
+    "btn_need_qtx": {"ko": "처방 탐색 시작 (QTX 업로드 필요)", "en": "Start Search (Upload QTX First)", "vi": "Bắt đầu tìm kiếm (Cần tải lên QTX trước)"},
+    "btn_need_dye": {"ko": "처방 탐색 시작 (염료 1개 이상 선택 필요)", "en": "Start Search (Select 1+ Dye)", "vi": "Bắt đầu tìm kiếm (Cần chọn ít nhất 1 thuốc nhuộm)"},
+    "btn_start": {"ko": "처방 탐색 시작", "en": "Start Recipe Search", "vi": "Bắt đầu tìm kiếm công thức"},
+    "result_title": {"ko": "처방 탐색 결과", "en": "Recipe Search Results", "vi": "Kết quả tìm kiếm công thức"},
+    "finding": {"ko": "최적의 염료를 찾고있습니다..", "en": "Finding the optimal dyes..", "vi": "Đang tìm kiếm thuốc nhuộm tối ưu.."},
+    "finding_desc": {"ko": "조합을 탐색하고 정밀 분석을 수행하는 중입니다.<br>화면이 멈춘 것이 아니니 잠시만 기다려주세요.", "en": "Searching combinations and performing precise analysis.<br>Please wait, the screen is not frozen.", "vi": "Đang tìm kiếm tổ hợp và phân tích chính xác.<br>Vui lòng đợi, màn hình không bị treo."},
+    "fastness_title": {"ko": "탐색된 처방 예상 견뢰도 분석", "en": "Predicted Fastness Analysis", "vi": "Phân tích độ bền màu dự kiến"},
+    "fastness_sel": {"ko": "견뢰도를 확인할 처방 순위 선택:", "en": "Select recipe rank to check fastness:", "vi": "Chọn thứ hạng công thức để kiểm tra độ bền màu:"},
+    "fastness_desc": {"ko": "※ S/D 1/1 대비 농도 패널티 반영 수치입니다.", "en": "※ Fastness is adjusted based on concentration vs S/D 1/1.", "vi": "※ Độ bền màu được điều chỉnh dựa trên nồng độ so với S/D 1/1."},
+    "req_target": {"ko": "좌측 패널에서 타겟 색상을 업로드하고 처방 탐색을 시작해주세요.", "en": "Please upload a target color and start the search.", "vi": "Vui lòng tải lên màu mục tiêu ở bảng bên trái và bắt đầu tìm kiếm."},
+    "no_recipe": {"ko": "유효한 처방을 찾지 못했습니다.", "en": "No valid recipe found.", "vi": "Không tìm thấy công thức hợp lệ."},
+    "missing_dyes": {"ko": "데이터 부족으로 제외된 염료 {count}개:\n{dyes}", "en": "{count} dyes excluded due to missing data:\n{dyes}", "vi": "{count} thuốc nhuộm bị loại trừ do thiếu dữ liệu:\n{dyes}"},
+    "success_add": {"ko": "성공적으로 {count}개의 염료를 추가했습니다!", "en": "Successfully added {count} dyes!", "vi": "Đã thêm thành công {count} thuốc nhuộm!"},
+    "fail_add": {"ko": "추가할 수 있는 새로운 염료가 없습니다 (이미 있거나 매칭 실패).", "en": "No new dyes to add (already exist or matching failed).", "vi": "Không có thuốc nhuộm mới để thêm (đã tồn tại hoặc không khớp)."},
+    "warn_paste": {"ko": "먼저 텍스트창에 복사한 내용을 붙여넣어 주세요.", "en": "Please paste text in the input box first.", "vi": "Vui lòng dán văn bản vào ô nhập liệu trước."},
+    "target_found": {"ko": "인식된 타겟: **{name}**", "en": "Recognized Target: **{name}**", "vi": "Đã nhận dạng mục tiêu: **{name}**"},
+    "qtx_error": {"ko": "QTX 파일에서 데이터를 찾을 수 없습니다.", "en": "No data found in the QTX file.", "vi": "Không tìm thấy dữ liệu trong tệp QTX."},
+    "qtx_parse_error": {"ko": "QTX 분석 오류: {e}", "en": "QTX Parse Error: {e}", "vi": "Lỗi phân tích QTX: {e}"},
+    "popup_title": {"ko": "처방 상세 분석 (상용성 & 견뢰도)", "en": "Recipe Detailed Analysis...", "vi": "Phân tích chi tiết công thức (Tính tương thích & Độ bền màu)..."},
+    "comp_sim": {"ko": "상용성 시뮬레이션", "en": "Compatibility Simulation", "vi": "Mô phỏng tính tương thích"},
+    "comp_x_disp": {"ko": "온도 / 유지 시간", "en": "Temp / Hold Time", "vi": "Nhiệt độ / Thời gian giữ"},
+    "comp_x_reac": {"ko": "공정 시간 (분)", "en": "Process Time (min)", "vi": "Thời gian quy trình (phút)"},
+    "comp_y": {"ko": "염착률 (%)", "en": "Exhaustion (%)", "vi": "Tỷ lệ hấp thụ (%)"},
+    "no_comp_data": {"ko": "선택된 염료의 상용성 실험 데이터가 없습니다.", "en": "No compatibility test data for the selected dyes.", "vi": "Không có dữ liệu kiểm tra tính tương thích cho thuốc nhuộm đã chọn."},
+    "lab_dip_guide": {"ko": "상용성 기반 Lab dip 예측 (가이드)", "en": "Lab Dip Prediction based on Compatibility (Guide)", "vi": "Dự đoán Lab dip dựa trên tính tương thích (Hướng dẫn)"},
+    "lab_dip_desc": {"ko": "※ 염료 간 흡착 속도 차이(경쟁 흡착)로 인한 수율 저하를 계산합니다.<br>전체 평균이 아닌, <strong>가장 격차가 심하게 벌어지는 시점(초/중반부 최대 Gap)</strong>을 추적하여 보정치를 산출합니다.", "en": "※ Calculates yield reduction due to differences in adsorption speed.<br>It tracks the <strong>maximum gap at the early/mid stages</strong> rather than the overall average to calculate the adjustment.", "vi": "※ Tính toán sự giảm hiệu suất do khác biệt tốc độ hấp thụ.<br>Theo dõi <strong>khoảng cách lớn nhất ở giai đoạn đầu/giữa</strong> để tính mức điều chỉnh."},
+    "max_delay": {"ko": "최대 -{gap:.1f}% 지연", "en": "Max -{gap:.1f}% Delay", "vi": "Độ trễ tối đa -{gap:.1f}%"},
+    "baseline_fast": {"ko": "기준 (가장 빠름)", "en": "Baseline (Fastest)", "vi": "Tiêu chuẩn (Nhanh nhất)"},
+    "no_data": {"ko": "데이터 없음", "en": "No Data", "vi": "Không có dữ liệu"},
+    "dye_name": {"ko": "염료명", "en": "Dye Name", "vi": "Tên thuốc nhuộm"},
+    "calc_recipe": {"ko": "산출 처방 (원본)", "en": "Calculated Recipe (Original)", "vi": "Công thức tính toán (Gốc)"},
+    "pred_recipe": {"ko": "예상 보정 처방 (가이드)", "en": "Predicted Recipe (Guide)", "vi": "Công thức dự đoán (Hướng dẫn)"},
+    "adj_needed": {"ko": "증감 필요량", "en": "Adjustment Needed", "vi": "Mức điều chỉnh cần thiết"},
+    "comp_diff": {"ko": "상용성 차이 (Max Gap)", "en": "Compatibility Diff (Max Gap)", "vi": "Khác biệt tương thích (Khoảng cách tối đa)"},
+    "no_comp_pred": {"ko": "예측값을 계산하기 위한 상용성 데이터가 충분하지 않습니다.", "en": "Not enough compatibility data to calculate predictions.", "vi": "Không đủ dữ liệu tương thích để tính toán dự đoán."},
+    "fastness_detail": {"ko": "상세 견뢰도 분석", "en": "Detailed Fastness Analysis", "vi": "Phân tích độ bền màu chi tiết"},
+    "indiv_fastness": {"ko": "**1. 개별 염료 견뢰도 (DB 원본)**", "en": "**1. Individual Dye Fastness (DB Original)**", "vi": "**1. Độ bền màu từng loại (DB gốc)**"},
+    "mix_fastness": {"ko": "**2. MIX 예상 견뢰도 (처방 농도 반영)**", "en": "**2. MIX Predicted Fastness (Recipe Conc. Applied)**", "vi": "**2. Độ bền màu MIX dự đoán (Áp dụng nồng độ)**"},
+    "mix_fastness_desc": {"ko": "※ 가장 취약한 염료 등급 기준이며, 기준 농도 대비 처방 농도에 따른 보정(보너스/패널티)이 자동 반영된 결과입니다. (최대 4.5급)", "en": "※ Based on the weakest dye grade, with bonuses/penalties applied based on recipe concentration. (Max 4.5)", "vi": "※ Dựa trên loại yếu nhất, tự động cộng/trừ điểm theo nồng độ công thức. (Tối đa 4.5)"},
+    "add_to_list": {"ko": "리스트에 처방 추가하기", "en": "Add Recipe to List", "vi": "Thêm công thức vào danh sách"},
+    "select_rank": {"ko": "추가/분석할 순위 선택", "en": "Select Rank to Add/Analyze", "vi": "Chọn thứ hạng để thêm/phân tích"},
+    "view_comp_fast": {"ko": "상용성 및 견뢰도 보기", "en": "View Compatibility & Fastness", "vi": "Xem tính tương thích & độ bền màu"},
+    "color_name_input": {"ko": "Color Name (색상명):", "en": "Color Name:", "vi": "Tên màu (Color Name):"},
+    "recipe_detail_set": {"ko": "처방 농도 세부 설정", "en": "Recipe Concentration Settings", "vi": "Cài đặt chi tiết nồng độ công thức"},
+    "apply_blend": {"ko": "혼방 비율 (CVC / T/C) 적용하기", "en": "Apply Blend Ratio (CVC / T/C)", "vi": "Áp dụng tỷ lệ pha trộn (CVC / T/C)"},
+    "cotton_ratio": {"ko": "Cotton (면) 비율 (%)", "en": "Cotton Ratio (%)", "vi": "Tỷ lệ Cotton (%)"},
+    "poly_ratio": {"ko": "Poly (폴리) 비율 (%)", "en": "Poly Ratio (%)", "vi": "Tỷ lệ Poly (%)"},
+    "applied_ratio": {"ko": "적용 비율: **{ratio}%**", "en": "Applied Ratio: **{ratio}%**", "vi": "Tỷ lệ áp dụng: **{ratio}%**"},
+    "apply_pdps": {"ko": "PDPS 적용 (처방 농도의 75%만 산출)", "en": "Apply PDPS (Yields 75% of recipe)", "vi": "Áp dụng PDPS (Chỉ tính 75% nồng độ)"},
+    "pdps_applied": {"ko": "PDPS 적용: **75%** 산출", "en": "PDPS Applied: **75%** yield", "vi": "Đã áp dụng PDPS: Tính **75%**"},
+    "add_current_recipe": {"ko": "현재 처방을 리스트에 추가", "en": "Add Current Recipe to List", "vi": "Thêm công thức hiện tại vào danh sách"},
+    "cart_status": {"ko": "현재 장바구니 현황 (총 {count}개)", "en": "Current Cart Status (Total {count})", "vi": "Trạng thái giỏ hàng (Tổng số {count})"},
+    "cart_color_name": {"ko": "색상명 (Color Name)", "en": "Color Name", "vi": "Tên màu (Color Name)"},
+    "cart_dye_mode": {"ko": "포함된 염료 모드", "en": "Included Dye Modes", "vi": "Chế độ thuốc nhuộm bao gồm"},
+    "empty_cart": {"ko": "장바구니 비우기", "en": "Empty Cart", "vi": "Làm trống giỏ hàng"},
+    "create_excel": {"ko": "엑셀 리포트 생성", "en": "Create Excel Report", "vi": "Tạo báo cáo Excel"},
+    "base_template": {"ko": "기준 템플릿: ", "en": "Base Template: ", "vi": "Mẫu cơ sở: "},
+    "generate_excel_btn": {"ko": "엑셀 파일 생성하기", "en": "Generate Excel File", "vi": "Tạo tệp Excel"},
+    "generating_excel": {"ko": "엑셀 파일을 생성하는 중입니다...", "en": "Generating Excel file...", "vi": "Đang tạo tệp Excel..."},
+    "excel_ready": {"ko": "엑셀 파일이 준비되었습니다! 아래 버튼을 눌러 다운로드하세요.", "en": "Excel file is ready! Click the button below to download.", "vi": "Tệp Excel đã sẵn sàng! Nhấp vào nút bên dưới để tải xuống."},
+    "excel_error": {"ko": "엑셀 생성 중 문제가 발생했습니다:\n\n{e}", "en": "An error occurred while creating Excel:\n\n{e}", "vi": "Đã xảy ra lỗi khi tạo Excel:\n\n{e}"},
+    "download_excel": {"ko": "완성된 엑셀 파일 다운로드", "en": "Download Completed Excel File", "vi": "Tải xuống tệp Excel đã hoàn thành"},
+    "cart_empty_info": {"ko": "장바구니가 비어 있습니다. [처방 탐색 결과] 탭에서 원하는 처방을 리스트에 추가해주세요.", "en": "Cart is empty. Please add a recipe from the [Search Results] tab.", "vi": "Giỏ hàng trống. Vui lòng thêm công thức từ tab [Kết quả tìm kiếm]."},
+    "tab_search": {"ko": "처방 탐색 결과", "en": "Recipe Search Results", "vi": "Kết quả tìm kiếm công thức"},
+    "tab_cart": {"ko": "장바구니 및 엑셀 출력", "en": "Cart & Excel Export", "vi": "Giỏ hàng & Xuất Excel"},
+    "err_cpb_only": {"ko": "장바구니가 'CPB' 모드입니다. 다른 염료를 추가할 수 없습니다.", "en": "Cart is in 'CPB' mode. Cannot add other dyes.", "vi": "Giỏ hàng đang ở chế độ 'CPB'. Không thể thêm thuốc nhuộm khác."},
+    "err_cdp_only": {"ko": "장바구니가 'CDP' 모드입니다. 다른 모드의 염료를 추가할 수 없습니다.", "en": "Cart is in 'CDP' mode. Cannot add other dye modes.", "vi": "Giỏ hàng đang ở chế độ 'CDP'. Không thể thêm chế độ khác."},
+    "err_acid_only": {"ko": "장바구니가 'Acid' 모드입니다. 다른 모드의 염료를 추가할 수 없습니다.", "en": "Cart is in 'Acid' mode. Cannot add other dye modes.", "vi": "Giỏ hàng đang ở chế độ 'Acid'. Không thể thêm chế độ khác."},
+    "err_has_others_cpb": {"ko": "장바구니에 다른 염료가 있습니다. CPB 처방을 추가할 수 없습니다.", "en": "Cart contains other dyes. Cannot add CPB recipe.", "vi": "Giỏ hàng có chứa thuốc nhuộm khác. Không thể thêm công thức CPB."},
+    "err_has_others_cdp": {"ko": "장바구니에 다른 염료가 있습니다. CDP 처방을 추가할 수 없습니다.", "en": "Cart contains other dyes. Cannot add CDP recipe.", "vi": "Giỏ hàng có chứa thuốc nhuộm khác. Không thể thêm công thức CDP."},
+    "err_has_others_acid": {"ko": "장바구니에 다른 염료가 있습니다. Acid 처방을 추가할 수 없습니다.", "en": "Cart contains other dyes. Cannot add Acid recipe.", "vi": "Giỏ hàng có chứa thuốc nhuộm khác. Không thể thêm công thức Acid."},
+    "err_cvc_need_d": {"ko": "혼합(CVC)을 원하시면 첫 번째 색상에 분산(D) 염료를 먼저 추가해주세요.", "en": "For CVC blend, please add Disperse (D) dyes to the first color.", "vi": "Để pha trộn CVC, vui lòng thêm thuốc nhuộm Disperse (D) vào màu đầu tiên."},
+    "err_cvc_need_r": {"ko": "혼합(CVC)을 원하시면 첫 번째 색상에 반응성(R) 염료를 먼저 추가해주세요.", "en": "For CVC blend, please add Reactive (R) dyes to the first color.", "vi": "Để pha trộn CVC, vui lòng thêm thuốc nhuộm Reactive (R) vào màu đầu tiên."},
+    "success_added_cart": {"ko": "'{name}' 처방 리스트 추가 완료! (총 {count}개)", "en": "Recipe '{name}' added to list! (Total {count})", "vi": "Đã thêm công thức '{name}' vào danh sách! (Tổng số {count})"},
+    "success_added_cart_ratio": {"ko": "농도 비율({ratio}%) 적용하여 '{name}' 처방 추가 완료! (총 {count}개)", "en": "Recipe '{name}' added with ratio ({ratio}%)! (Total {count})", "vi": "Đã thêm công thức '{name}' với tỷ lệ ({ratio}%)! (Tổng số {count})"},
+    "prog_init": {"ko": "총 {count}개 조합에 대해 사전 탐색을 진행합니다...", "en": "Starting initial search for {count} combinations...", "vi": "Đang bắt đầu tìm kiếm sơ bộ cho {count} tổ hợp..."},
+    "prog_fast": {"ko": "총 {total}개 조합 고속 필터링 중... ({curr}/{total})", "en": "Fast filtering {total} combinations... ({curr}/{total})", "vi": "Lọc nhanh {total} tổ hợp... ({curr}/{total})"},
+    "prog_precise": {"ko": "최적의 {total}개 정밀 검색 중: {names} ({curr}/{total})", "en": "Precise searching top {total} recipes: {names} ({curr}/{total})", "vi": "Đang tìm kiếm chính xác {total} công thức tốt nhất: {names} ({curr}/{total})"}
 }
 
 if "lang" not in st.session_state:
@@ -201,6 +202,7 @@ st.markdown(f"""
     [data-testid="collapsedControl"] {{ display: none !important; }}
     [data-testid="stSidebar"] div.stButton {{ margin-bottom: -10px; }}
 
+    /* 🚨 1. 상단 메뉴바 위치 고정 및 중앙 정렬 */
     div[data-testid="stHorizontalBlock"]:has(#top-menu-marker) {{
         position: fixed !important; top: 10px !important; 
         left: 360px !important; right: 20px !important; width: auto !important; 
@@ -209,20 +211,30 @@ st.markdown(f"""
     div.element-container:has(#top-menu-marker) {{
         display: none !important; margin: 0 !important; padding: 0 !important; height: 0 !important;
     }}
-    div[data-testid="stHorizontalBlock"]:has(#top-menu-marker) div[data-baseweb="select"] {{
-        border: none !important; background-color: transparent !important; box-shadow: none !important; cursor: pointer;
+
+    /* 🚨 2. 선생님의 원본 CSS 복구 (버튼 높이 38px 강제 고정) */
+    div[data-testid="stHorizontalBlock"]:has(#top-menu-marker) div.stButton > button {{
+        border-radius: 8px; padding: 0px 10px; height: 38px !important; min-height: 38px !important; margin: 0 !important; 
+    }}
+
+    /* 🚨 3. 드롭다운(Selectbox)도 버튼과 동일하게 38px로 완벽히 맞춤 */
+    div[data-testid="stHorizontalBlock"]:has(#top-menu-marker) div[data-testid="stSelectbox"] {{
+        margin: 0 !important; padding: 0 !important;
+    }}
+    div[data-testid="stHorizontalBlock"]:has(#top-menu-marker) label[data-testid="stWidgetLabel"] {{
+        display: none !important; margin: 0 !important; height: 0 !important;
     }}
     div[data-testid="stHorizontalBlock"]:has(#top-menu-marker) div[data-baseweb="select"] > div {{
-        border: none !important; background-color: transparent !important; padding-left: 8px; padding-right: 8px;
+        height: 38px !important; min-height: 38px !important; margin: 0 !important;
+        border: none !important; background-color: transparent !important;
     }}
+    
+    /* 텍스트 및 기본 음영 스타일 */
     div[data-testid="stHorizontalBlock"]:has(#top-menu-marker) div[data-baseweb="select"] * {{
         color: #1f325c !important; font-weight: 700 !important; font-size: 15px !important;
     }}
     div[data-testid="stHorizontalBlock"]:has(#top-menu-marker) div[data-baseweb="select"]:hover {{
         background-color: rgba(0,0,0,0.04) !important; border-radius: 6px;
-    }}
-    div[data-testid="stHorizontalBlock"]:has(#top-menu-marker) div.stButton > button {{
-        border-radius: 8px; padding: 0px 10px; height: 38px; min-height: 38px; margin: 0 !important; 
     }}
 </style>
 <div class="fixed-header">
@@ -846,20 +858,41 @@ def show_analysis_popup(recipe_dict, fastness_db, comp_data):
             except: return str(val)
 
         def format_display_columns(cols):
-            # 엑셀 표 안의 한글 용어들을 영어로 바꿔주는 변환 함수
+            # 엑셀 표 안의 한글 용어들을 각 언어에 맞게 바꿔주는 변환 함수
             def translate_col(col_str):
-                if st.session_state.lang != "en": return col_str
+                # 한국어면 원본 그대로 반환
+                if st.session_state.lang == "ko": return col_str
+                
+                # 언어별 번역 사전 (영어, 베트남어)
                 trans_dict = {
-                    "일광": "Light", "세탁": "Washing", "땀일광(산성)": "Persp+Light(Acid)", "땀일광(알칼리)": "Persp+Light(Alkali)", 
-                    "땀(산성)": "Persp(Acid)", "땀(알칼리)": "Persp(Alkali)", "물": "Water", "염소수": "Chlorine", "다림질": "Ironing",
-                    "건": "Dry", "습": "Wet", "변퇴색": "Color Change", "오염": "Staining",
-                    "아세테이트": "Acetate", "면": "Cotton", "나일론": "Nylon", "폴리": "Poly",
-                    "아크릴": "Acrylic", "모": "Wool", "실크": "Silk"
+                    "일광": {"en": "Light", "vi": "Ánh sáng"}, 
+                    "세탁": {"en": "Washing", "vi": "Giặt"}, 
+                    "땀일광(산성)": {"en": "Persp+Light(Acid)", "vi": "Mồ hôi+Ánh sáng(Axit)"}, 
+                    "땀일광(알칼리)": {"en": "Persp+Light(Alkali)", "vi": "Mồ hôi+Ánh sáng(Kiềm)"}, 
+                    "땀(산성)": {"en": "Persp(Acid)", "vi": "Mồ hôi(Axit)"}, 
+                    "땀(알칼리)": {"en": "Persp(Alkali)", "vi": "Mồ hôi(Kiềm)"}, 
+                    "물": {"en": "Water", "vi": "Nước"}, 
+                    "염소수": {"en": "Chlorine", "vi": "Clo"}, 
+                    "다림질": {"en": "Ironing", "vi": "Ủi"},
+                    "건": {"en": "Dry", "vi": "Khô"}, 
+                    "습": {"en": "Wet", "vi": "Ướt"}, 
+                    "변퇴색": {"en": "Color Change", "vi": "Đổi màu"}, 
+                    "오염": {"en": "Staining", "vi": "Dây màu"},
+                    "아세테이트": {"en": "Acetate", "vi": "Acetate"}, 
+                    "면": {"en": "Cotton", "vi": "Cotton"}, 
+                    "나일론": {"en": "Nylon", "vi": "Nylon"}, 
+                    "폴리": {"en": "Poly", "vi": "Poly"},
+                    "아크릴": {"en": "Acrylic", "vi": "Acrylic"}, 
+                    "모": {"en": "Wool", "vi": "Len"}, 
+                    "실크": {"en": "Silk", "vi": "Lụa"}
                 }
+                
                 res = str(col_str)
                 # 단어가 긴 것부터 찾아 바꿔야 오류가 안 납니다 (예: '땀(일광)'을 '땀'보다 먼저 변환)
                 for k in sorted(trans_dict.keys(), key=len, reverse=True):
-                    res = res.replace(k, trans_dict[k])
+                    # 현재 선택된 언어의 번역값을 가져옴 (없으면 영어로 대체, 그것도 없으면 원본 유지)
+                    target_word = trans_dict[k].get(st.session_state.lang, trans_dict[k].get("en", k))
+                    res = res.replace(k, target_word)
                 return res
 
             # 번역 먼저 실행
@@ -941,8 +974,8 @@ def disperse_dialog():
 # ==========================================
 # 5. Streamlit 웹 UI 구성 (메뉴 컬럼 추가)
 # ==========================================
-# 👉 앞의 5개 버튼(Reactive ~ Acid)의 비율을 [1, 1, 1, 1, 1]로 똑같이 맞추어 가로 크기를 통일했습니다.
-top_menu_cols = st.columns([1, 1, 1, 1, 1, 1.5, 3.2, 0.7, 0.7])
+top_menu_cols = st.columns([1, 1, 1, 1, 1, 1.5, 3.8, 0.8], vertical_alignment="center")
+
 with top_menu_cols[0]:
     st.button("Reactive", use_container_width=True, type="primary" if dye_mode == "Reactive" else "secondary", on_click=set_dye_mode, args=("Reactive",), key="btn_react_top")
     st.markdown('<div id="top-menu-marker"></div>', unsafe_allow_html=True)
@@ -954,18 +987,33 @@ with top_menu_cols[2]: st.button("Reactive (CPB)", use_container_width=True, typ
 with top_menu_cols[3]: st.button("CDP", use_container_width=True, type="primary" if dye_mode == "CDP" else "secondary", on_click=set_dye_mode, args=("CDP",), key="btn_cdp_top")
 with top_menu_cols[4]: st.button("Acid", use_container_width=True, type="primary" if dye_mode == "Acid" else "secondary", on_click=set_dye_mode, args=("Acid",), key="btn_acid_top")
 
-# 업체 선택 박스 (다국어 맵핑)
 with top_menu_cols[5]:
     company_options = [t("company_all")] + all_companies
     selected_company = st.selectbox(t("company_sel"), options=company_options, index=None, placeholder=t("company_sel"), label_visibility="collapsed", key="company_select_top")
 
-# (top_menu_cols[6] 은 빈 공간으로 남겨둡니다 - 버튼들을 우측으로 밀어내는 역할)
-
-# 언어 변환 버튼을 우측 끝(7번째, 8번째 컬럼)에 배치
+# 언어 변환 드롭다운을 우측 끝(8번째 컬럼)에 배치
 with top_menu_cols[7]:
-    st.button("🇰🇷 KO", use_container_width=True, type="primary" if st.session_state.lang == "ko" else "secondary", on_click=set_lang, args=("ko",), key="btn_lang_ko")
-with top_menu_cols[8]:
-    st.button("🇺🇸 EN", use_container_width=True, type="primary" if st.session_state.lang == "en" else "secondary", on_click=set_lang, args=("en",), key="btn_lang_en")
+    lang_options = {
+        "ko": "🌐 KOR", 
+        "en": "🌐 ENG",
+        "vi": "🌐 VIE"
+    } 
+    
+    current_idx = list(lang_options.keys()).index(st.session_state.lang) if st.session_state.lang in lang_options else 0
+    
+    selected_lang_label = st.selectbox(
+        "Language",
+        options=list(lang_options.values()),
+        index=current_idx,
+        label_visibility="collapsed",
+        key="lang_dropdown"
+    )
+    
+    selected_code = [k for k, v in lang_options.items() if v == selected_lang_label][0]
+    
+    if selected_code != st.session_state.lang:
+        st.session_state.lang = selected_code
+        st.rerun()
 
 # ------------------------------------------
 # 왼쪽 사이드바 (염료 리스트)
@@ -1122,8 +1170,20 @@ with col_menu:
         st.markdown(f"<strong style='display: flex; align-items: center; font-size: 16px;'><span class='material-symbols-outlined' style='margin-right:6px;'>settings</span>{t('step2_title')}</strong>", unsafe_allow_html=True)
         
         st.markdown(f"<div style='font-size: 13px; font-weight: bold; margin-bottom: 5px; margin-top: 10px; display: flex; align-items: center;'><span class='material-symbols-outlined' style='margin-right:4px; font-size:16px;'>label</span>{t('auto_brand')}</div>", unsafe_allow_html=True)
+        
+        # 👇 새로 추가되는 브랜드명 번역 함수
+        def format_brand_name(x):
+            if x == "직접 선택 (Manual)":
+                if st.session_state.lang == "en":
+                    return "Manual"
+                elif st.session_state.lang == "vi":
+                    return "Thủ công (Manual)"
+            return x
+
         brand_list = ["직접 선택 (Manual)"] + sorted(brand_df['Brand'].dropna().unique().tolist())
-        st.selectbox(t("auto_brand_desc"), brand_list, key="brand_selector", on_change=on_brand_change, label_visibility="collapsed", format_func=lambda x: "Manual" if x=="직접 선택 (Manual)" and st.session_state.lang=="en" else x)
+        
+        # 👇 람다(lambda) 대신 위에서 만든 format_brand_name 함수를 적용
+        st.selectbox(t("auto_brand_desc"), brand_list, key="brand_selector", on_change=on_brand_change, label_visibility="collapsed", format_func=format_brand_name)
 
         st.markdown(f"<div style='font-size: 13px; font-weight: bold; margin-bottom: 5px; margin-top: 15px; display: flex; align-items: center;'><span class='material-symbols-outlined' style='margin-right:4px; font-size:16px;'>lightbulb</span>{t('light_detail')}</div>", unsafe_allow_html=True)
         light_options_all = list(LIGHT_MAP.keys())
@@ -1131,10 +1191,13 @@ with col_menu:
         
         l_col1, l_col2, l_col3 = st.columns(3)
         
-        # 포맷 함수 (화면에 표시할 때만 영어로 변환)
+        # 포맷 함수 (화면에 표시할 때만 다국어로 변환)
         def format_light_name(x):
-            if str(x).strip() == "없음" and st.session_state.lang == "en":
-                return "None"
+            if str(x).strip() == "없음":
+                if st.session_state.lang == "en":
+                    return "None"
+                elif st.session_state.lang == "vi":
+                    return "Không"  # 베트남어로 '없음(None)'을 의미합니다.
             return x
             
         # 기존 세션에 저장된 값을 통해 인덱스 번호 찾기 (없으면 기본값)
