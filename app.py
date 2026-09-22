@@ -999,30 +999,35 @@ with top_menu_cols[7]:
         "vi": "🌐 VIE"
     } 
     
+    # 👉 언어 변경 콜백 함수
+    def update_language():
+        selected_label = st.session_state.lang_dropdown
+        # 선택된 라벨에 맞는 코드를 찾아서 세션에 바로 저장
+        for code, label in lang_options.items():
+            if label == selected_label:
+                st.session_state.lang = code
+                break
+
     current_idx = list(lang_options.keys()).index(st.session_state.lang) if st.session_state.lang in lang_options else 0
     
-    selected_lang_label = st.selectbox(
+    # on_change를 적용하고, 아래에 있던 st.rerun() 로직은 삭제합니다.
+    st.selectbox(
         "Language",
         options=list(lang_options.values()),
         index=current_idx,
         label_visibility="collapsed",
-        key="lang_dropdown"
+        key="lang_dropdown",
+        on_change=update_language
     )
-    
-    selected_code = [k for k, v in lang_options.items() if v == selected_lang_label][0]
-    
-    if selected_code != st.session_state.lang:
-        st.session_state.lang = selected_code
-        st.rerun()
 
 # ------------------------------------------
 # 왼쪽 사이드바 (염료 리스트)
 # ------------------------------------------
 with st.sidebar:
-    st.markdown(f"<h3 style='display: flex; align-items: center;'><span class='material-symbols-outlined' style='margin-right:8px;'>palette</span>{t('dye_list')} ({header_mode_text})</h3>", unsafe_allow_html=True)
+    # 1. 누락된 염료 경고 (있을 경우에만 최상단 표시)
     if missing_dyes: st.warning(t("missing_dyes", count=len(missing_dyes), dyes=', '.join(missing_dyes)), icon=":material/warning:")
-    st.caption(t("click_guide"))
     
+    # 2. 텍스트 붙여넣기 및 로드 기능 (최상단으로 이동)
     pasted_text = st.text_input(t("paste_ph"), label_visibility="collapsed", placeholder=t("paste_ph"))
     if st.button(t("load_ohyoung"), use_container_width=True, type="primary"):
         if pasted_text:
@@ -1046,7 +1051,25 @@ with st.sidebar:
         else: 
             st.warning(t("warn_paste"))
             
-    st.markdown("---")
+    # 3. 구분선 (위아래 여백을 대폭 줄인 커스텀 HTML 라인)
+    st.markdown("<hr style='margin: 8px 0px; border: none; border-top: 1px solid #e0e0e0;'>", unsafe_allow_html=True)
+    
+    # 4. 선택된 염료 보기 (토글 버튼) - 이모티콘 제거 및 구글 아이콘(icon) 적용
+    if "show_selected_only" not in st.session_state: 
+        st.session_state.show_selected_only = False
+
+    def toggle_selected_only():
+        st.session_state.show_selected_only = not st.session_state.show_selected_only
+
+    btn_type_selected = "primary" if st.session_state.show_selected_only else "secondary"
+    view_sel_text = {"ko": "선택된 염료 보기", "en": "View Selected Dyes", "vi": "Xem thuốc nhuộm đã chọn"}.get(st.session_state.lang, "선택된 염료 보기")
+    
+    # 🚨 기존 "✅ "를 지우고 파라미터로 구글 머티리얼 아이콘 추가
+    st.button(view_sel_text, use_container_width=True, type=btn_type_selected, on_click=toggle_selected_only, icon=":material/check_circle:")
+    
+    st.markdown("<div style='margin-bottom: 10px;'></div>", unsafe_allow_html=True)
+    
+    # 5. 염료 검색 바
     def clear_search(): st.session_state.search_query_input = ""
     st.markdown(f"<div style='font-size: 14px; font-weight: bold; margin-bottom: 5px; display: flex; align-items: center;'><span class='material-symbols-outlined' style='margin-right:6px; font-size:18px;'>search</span>{t('search_dye')}</div>", unsafe_allow_html=True)
     
@@ -1058,7 +1081,12 @@ with st.sidebar:
         
     dye_hex_dict = get_all_dye_hex_dict(st.session_state.dye_mode, st.session_state.disperse_sub)
     filtered_dyes = []
+    
     for raw_name, display_name, companies in all_dyes_ordered:
+        # 👉 [핵심] '선택된 염료 보기' 버튼이 켜져있고, 현재 염료가 선택되어 있지 않다면 리스트에서 제외
+        if st.session_state.show_selected_only and raw_name not in st.session_state.selected_dyes:
+            continue
+            
         company_match = (selected_company is None or selected_company == t("company_all") or selected_company in companies)
         search_match = True
         if search_query: search_match = (search_query.lower() in raw_name.lower()) or (search_query.lower() in display_name.lower())
@@ -1205,15 +1233,33 @@ with col_menu:
         idx2 = light_options_optional.index(st.session_state.l2) if st.session_state.l2 in light_options_optional else len(light_options_optional)-1
         idx3 = light_options_optional.index(st.session_state.l3) if st.session_state.l3 in light_options_optional else len(light_options_optional)-1
 
-        # 언어가 바뀔 때마다 위젯을 강제로 새로고침하기 위해 key에 언어를 포함시킴
-        light1_name = l_col1.selectbox(t("light_1"), light_options_all, index=idx1, key=f"l1_ui_{st.session_state.lang}")
-        light2_name = l_col2.selectbox(t("light_2"), light_options_optional, index=idx2, format_func=format_light_name, key=f"l2_ui_{st.session_state.lang}") 
-        light3_name = l_col3.selectbox(t("light_3"), light_options_optional, index=idx3, format_func=format_light_name, key=f"l3_ui_{st.session_state.lang}") 
+        # 👉 콜백 함수 추가: UI에서 값이 바뀌면 즉시 session_state에 반영
+        def update_light_from_ui(light_num):
+            key = f"l{light_num}_ui_{st.session_state.lang}"
+            st.session_state[f"l{light_num}"] = st.session_state[key]
+
+        # 언어가 바뀔 때마다 위젯을 강제로 새로고침하기 위해 key에 언어를 포함시킴 + on_change 연결
+        light1_name = l_col1.selectbox(
+            t("light_1"), light_options_all, index=idx1, 
+            key=f"l1_ui_{st.session_state.lang}", 
+            on_change=update_light_from_ui, args=(1,)
+        )
+        light2_name = l_col2.selectbox(
+            t("light_2"), light_options_optional, index=idx2, format_func=format_light_name, 
+            key=f"l2_ui_{st.session_state.lang}", 
+            on_change=update_light_from_ui, args=(2,)
+        ) 
+        light3_name = l_col3.selectbox(
+            t("light_3"), light_options_optional, index=idx3, format_func=format_light_name, 
+            key=f"l3_ui_{st.session_state.lang}", 
+            on_change=update_light_from_ui, args=(3,)
+        ) 
         
-        # 선택된 값을 다시 세션에 수동으로 덮어쓰기 (내부 로직은 '없음'을 그대로 사용하도록 유지)
-        st.session_state.l1 = light1_name
-        st.session_state.l2 = light2_name
-        st.session_state.l3 = light3_name
+        # 🚨 하단에 있던 아래 3줄은 반드시 삭제하세요! 
+        # (위의 콜백 함수에서 이미 처리했기 때문에 삭제해야 정상 작동합니다)
+        # st.session_state.l1 = light1_name (삭제)
+        # st.session_state.l2 = light2_name (삭제)
+        # st.session_state.l3 = light3_name (삭제)
 
     with st.container(border=True):
         st.markdown(f"<strong style='display: flex; align-items: center; font-size: 16px;'><span class='material-symbols-outlined' style='margin-right:6px;'>science</span>{t('step3_title')}</strong>", unsafe_allow_html=True)
